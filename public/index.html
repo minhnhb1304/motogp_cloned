@@ -1,208 +1,349 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <title>MotoGP</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="bootstrap.min.css" rel="stylesheet" />
+    <script src="bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="script.js"></script>
+    <style>
+      .hero-section {
+        background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+          url("https://resources.motogp.com/files/background/2024/MotoGP_new_logo.jpg?v1.0.3");
+        background-size: cover;
+        background-position: center;
+        color: white;
+        padding: 150px 0;
+        margin-top: 56px;
+        text-align: center;
+      }
+      .section-title {
+        text-align: center;
+        margin: 50px 0 30px;
+        font-weight: bold;
+      }
+      .rider-card,
+      .team-card {
+        transition: transform 0.3s;
+        margin-bottom: 20px;
+      }
+      .rider-card:hover,
+      .team-card:hover {
+        transform: translateY(-5px);
+      }
+      .rider-img,
+      .team-img {
+        height: 200px;
+        object-fit: cover;
+      }
+      .calendar-item {
+        border-left: 4px solid #e10600;
+        margin-bottom: 15px;
+        padding: 15px;
+        background: #f8f9fa;
+      }
+      .result-row:nth-child(1) {
+        background-color: #ffd700;
+      }
+      .result-row:nth-child(2) {
+        background-color: #c0c0c0;
+      }
+      .result-row:nth-child(3) {
+        background-color: #cd7f32;
+      }
+      .feature-card {
+        transition: transform 0.3s;
+        margin-bottom: 30px;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .feature-card:hover {
+        transform: translateY(-5px);
+      }
+      .feature-card .card-img-top {
+        height: 275px;
+        object-fit: cover;
+      }
+      .feature-card .card-body {
+        text-align: center;
+        padding: 2rem;
+      }
+      .feature-card .btn {
+        background-color: var(--motogp-red);
+        border: none;
+        padding: 10px 30px;
+        margin-top: 1rem;
+      }
+      .feature-card .btn:hover {
+        background-color: #c00;
+      }
+      .latest-updates {
+        background: #f8f9fa;
+        padding: 60px 0;
+        margin: 60px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-sm bg-light navbar-light fixed-top">
+      <div class="container">
+        <a class="navbar-brand" href="#">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/MotoGP_logo_%282024%29.svg/1200px-MotoGP_logo_%282024%29.svg.png"
+            alt="MotoGP Logo"
+            style="height: 48px"
+          />
+        </a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a class="nav-link" href="calendar.html">CALENDAR</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="riders-teams.html">RIDERS & TEAMS</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="results-standings.html"
+                >RESULTS & STANDINGS</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="login.html">LOGIN</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
 
-<head>
-  <title>MotoGP</title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="bootstrap.min.css" rel="stylesheet">
-  <script src="bootstrap.bundle.min.js"></script>
-  <link rel="stylesheet" href="styles.css">
-  <script src="script.js"></script>
-  <style>
-    .hero-section {
-      background: linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)),
-                  url('https://resources.motogp.com/files/background/2024/MotoGP_new_logo.jpg?v1.0.3');
-      background-size: cover;
-      background-position: center;
-      color: white;
-      padding: 150px 0;
-      margin-top: 56px;
-      text-align: center;
-    }
-    .section-title {
-      text-align: center;
-      margin: 50px 0 30px;
-      font-weight: bold;
-    }
-    .rider-card, .team-card {
-      transition: transform 0.3s;
-      margin-bottom: 20px;
-    }
-    .rider-card:hover, .team-card:hover {
-      transform: translateY(-5px);
-    }
-    .rider-img, .team-img {
-      height: 200px;
-      object-fit: cover;
-    }
-    .calendar-item {
-      border-left: 4px solid #e10600;
-      margin-bottom: 15px;
-      padding: 15px;
-      background: #f8f9fa;
-    }
-    .result-row:nth-child(1) {
-      background-color: #ffd700;
-    }
-    .result-row:nth-child(2) {
-      background-color: #c0c0c0;
-    }
-    .result-row:nth-child(3) {
-      background-color: #cd7f32;
-    }
-    .feature-card {
-      transition: transform 0.3s;
-      margin-bottom: 30px;
-      border: none;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    .feature-card:hover {
-      transform: translateY(-5px);
-    }
-    .feature-card .card-img-top {
-      height: 200px;
-      object-fit: cover;
-    }
-    .feature-card .card-body {
-      text-align: center;
-      padding: 2rem;
-    }
-    .feature-card .btn {
-      background-color: var(--motogp-red);
-      border: none;
-      padding: 10px 30px;
-      margin-top: 1rem;
-    }
-    .feature-card .btn:hover {
-      background-color: #c00;
-    }
-    .latest-updates {
-      background: #f8f9fa;
-      padding: 60px 0;
-      margin: 60px 0;
-    }
-  </style>
-</head>
-<body>
+    <div class="hero-section">
+      <img src="/images/imgs/banner-headerr.png" alt="" class="hero-image" />
+      <div class="hero-overlay"></div>
 
-<nav class="navbar navbar-expand-sm bg-light navbar-light fixed-top">
-  <div class="container">
-    <a class="navbar-brand" href="#">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/MotoGP_logo_%282024%29.svg/1200px-MotoGP_logo_%282024%29.svg.png" alt="MotoGP Logo" style="height:48px;">
-    </a>
-    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav">
-        <li class="nav-item">
-          <a class="nav-link" href="calendar.html">CALENDAR</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="riders-teams.html">RIDERS & TEAMS</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="results-standings.html">RESULTS & STANDINGS</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link" href="login.html">LOGIN</a>
-        </li>
-      </ul>
+      <div class="hero-content">
+        <p class="source-date">MotoGP™</p>
+        <h1 class="hero-title">
+          BEZZECCHI VICTORIOUS FROM ZARCO AS QUARTARARO SUFFERS HEARTBREAK IN
+          SILVERSTONE EPIC
+        </h1>
+        <a href="#" class="read-now-btn">READ NOW</a>
+      </div>
     </div>
-  </div>
-</nav>
 
-<div class="hero-section">
-  <div class="container">
-    <h1>Welcome to MotoGP™</h1>
-    <p class="lead">Experience the thrill of the world's premier motorcycle racing championship</p>
-  </div>
-</div>
-
-<div class="container mt-5">
-  <div class="row">
-    <div class="col-md-4">
-      <div class="card feature-card">
-        <img src="https://photos.motogp.com/2024/02/06/2024-motogp-calendar.gallery_full_top_lg.jpg" class="card-img-top" alt="Race Calendar">
-        <div class="card-body">
-          <h3>Race Calendar</h3>
-          <p>Follow the MotoGP™ World Championship around the globe. View upcoming races and track the season's progress.</p>
-          <a href="calendar.html" class="btn btn-primary">View Calendar</a>
+    <div class="container mt-5">
+      <div class="row">
+        <div class="col-md-4">
+          <div class="card feature-card">
+            <img
+              src="./images/cld.avif"
+              class="card-img-top"
+              alt="Race Calendar"
+            />
+            <div class="card-body">
+              <h3>Race Calendar</h3>
+              <p>
+                Follow the MotoGP™ World Championship around the globe. View
+                upcoming races and track the season's progress.
+              </p>
+              <a href="calendar.html" class="btn btn-primary">View Calendar</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card feature-card">
+            <img
+              src="./images/rat.avif"
+              class="card-img-top"
+              alt="Riders and Teams"
+            />
+            <div class="card-body">
+              <h3>Riders & Teams</h3>
+              <p>
+                Meet the stars of MotoGP™ and their teams. Get to know the
+                riders and manufacturers competing for glory.
+              </p>
+              <a href="riders-teams.html" class="btn btn-primary"
+                >Meet the Grid</a
+              >
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="card feature-card">
+            <img
+              src="./images/std.jpg"
+              class="card-img-top"
+              alt="Results and Standings"
+            />
+            <div class="card-body">
+              <h3>Results & Standings</h3>
+              <p>
+                Stay up to date with race results and championship standings.
+                Track your favorite riders' progress.
+              </p>
+              <a href="results-standings.html" class="btn btn-primary"
+                >View Standings</a
+              >
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    <div class="col-md-4">
-      <div class="card feature-card">
-        <img src="https://photos.motogp.com/2024/02/06/whatsapp-image-2024-02-06-at-18.52.39.jpeg" class="card-img-top" alt="Riders and Teams">
-        <div class="card-body">
-          <h3>Riders & Teams</h3>
-          <p>Meet the stars of MotoGP™ and their teams. Get to know the riders and manufacturers competing for glory.</p>
-          <a href="riders-teams.html" class="btn btn-primary">Meet the Grid</a>
+
+    <section class="watch">
+      <h2>WHAT TO WATCH</h2>
+      <div class="container">
+        <div class="card">
+          <img src="/images/imgs/watch1.webp" alt="Watch 1" />
+        </div>
+        <div class="card">
+          <img src="/images/imgs/watch2.webp" alt="Watch 2" />
+        </div>
+        <div class="card">
+          <img src="/images/imgs/watch3.webp" alt="Watch 3" />
+        </div>
+        <div class="card">
+          <img src="/images/imgs/watch4.webp" alt="Watch 4" />
+        </div>
+        <div class="card">
+          <img src="/images/imgs/watch5.webp" alt="Watch 5" />
         </div>
       </div>
-    </div>
-    <div class="col-md-4">
-      <div class="card feature-card">
-        <img src="https://photos.motogp.com/2024/02/06/2024-motogp-sepang-test-day-1-1.gallery_full_top_lg.jpg" class="card-img-top" alt="Results and Standings">
-        <div class="card-body">
-          <h3>Results & Standings</h3>
-          <p>Stay up to date with race results and championship standings. Track your favorite riders' progress.</p>
-          <a href="results-standings.html" class="btn btn-primary">View Standings</a>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+    </section>
 
-<div class="latest-updates">
-  <div class="container">
-    <h2 class="text-center mb-4">Latest Updates</h2>
-    <div class="row" id="latest-updates">
-      <!-- Latest updates will be loaded here -->
-    </div>
-  </div>
-</div>
+    <section class="newsletter">
+      <h2>GET THE OFFICIAL MOTOGP™ NEWSLETTER!</h2>
+      <p>
+        Create a MotoGP™ account now and gain access to exclusive content, such
+        as the MotoGP™ Newsletter, which features GP Reports, incredible videos
+        and other interesting information about our sport.
+      </p>
+      <a href="#" class="btn-signup">SIGN UP FOR FREE</a>
+    </section>
 
-<footer class="bg-dark text-white mt-5">
-  <div class="container py-4">
-    <div class="row">
-      <div class="col-md-6">
-        <h5>About MotoGP™</h5>
-        <p>MotoGP™ is the premier motorcycle racing world championship; an eighteen-race series visiting fourteen countries, four continents and with pan-global television coverage.</p>
-      </div>
-      <div class="col-md-3">
-        <h5>Quick Links</h5>
-        <ul class="list-unstyled">
-          <li><a href="calendar.html" class="text-white">Calendar</a></li>
-          <li><a href="riders-teams.html" class="text-white">Riders & Teams</a></li>
-          <li><a href="results-standings.html" class="text-white">Results & Standings</a></li>
+    <footer>
+      <img class="logo" src="/images/footer1.png" alt="" class="motogp" />
+      <p>Official Sponsors</p>
+      <div class="logong">
+        <ul>
+          <li>
+            <a href=""><img src="/images/footer2.png" alt="" /></a>
+          </li>
+          <li>
+            <a href=""><img src="/images/footer3.png" alt="" /></a>
+          </li>
+          <li>
+            <a href=""><img src="/images/footer4.png" alt="" /></a>
+          </li>
+          <li>
+            <a href=""><img src="/images/footer5.png" alt="" /></a>
+          </li>
+          <li>
+            <a href=""><img src="/images/footer6.png" alt="" /></a>
+          </li>
+          <li>
+            <a href=""><img src="/images/footer7.png" alt="" /></a>
+          </li>
         </ul>
       </div>
-      <div class="col-md-3">
-        <h5>Follow Us</h5>
-        <div class="d-flex gap-3">
-          <a href="#" class="text-white"><i class="bi bi-facebook"></i></a>
-          <a href="#" class="text-white"><i class="bi bi-twitter"></i></a>
-          <a href="#" class="text-white"><i class="bi bi-instagram"></i></a>
-          <a href="#" class="text-white"><i class="bi bi-youtube"></i></a>
+      <div class="container">
+        <ul class="media">
+          <li><a href="" class="ma">Media & Commercial</a></li>
+          <li><a href="">Official Sponsors</a></li>
+          <li><a href="">TV Broadcast</a></li>
+          <li><a href="">MotoGP™ Apps</a></li>
+        </ul>
+        <ul class="media">
+          <li><a href="" class="ma">Media & Commercial</a></li>
+          <li><a href="">Official Sponsors</a></li>
+          <li><a href="">TV Broadcast</a></li>
+          <li><a href="">MotoGP™ Apps</a></li>
+        </ul>
+        <ul class="media">
+          <li><a href="" class="ma">Media & Commercial</a></li>
+          <li><a href="">Official Sponsors</a></li>
+          <li><a href="">TV Broadcast</a></li>
+          <li><a href="">MotoGP™ Apps</a></li>
+        </ul>
+        <ul class="media">
+          <li><a href="" class="ma">Media & Commercial</a></li>
+          <li><a href="">Official Sponsors</a></li>
+          <li><a href="">TV Broadcast</a></li>
+          <li><a href="">MotoGP™ Apps</a></li>
+        </ul>
+        <ul class="media">
+          <li><a href="" class="ma">Media & Commercial</a></li>
+          <li><a href="">Official Sponsors</a></li>
+          <li><a href="">TV Broadcast</a></li>
+          <li><a href="">MotoGP™ Apps</a></li>
+        </ul>
+      </div>
+      <div class="contact">
+        <div class="app-section">
+          <p>Download the Official<br /><strong>MotoGP™ App</strong></p>
+          <div class="app-links">
+            <a href="#"><img src="/images/f1.webp" alt="App Store" /></a>
+            <a href="#"><img src="/images/f2.webp" alt="Google Play" /></a>
+          </div>
+        </div>
+
+        <div class="social-icons">
+          <a href="#"
+            ><img src="/images/icons/facebook.svg" alt="Facebook"
+          /></a>
+          <a href="#"
+            ><img src="/images/icons/instagram.svg" alt="Instagram"
+          /></a>
+          <a href="#"><img src="/images/icons/threads.svg" alt="Threads" /></a>
+          <a href="#"><img src="/images/icons/x.svg" alt="X" /></a>
+          <a href="#"><img src="/images/icons/tiktok.svg" alt="TikTok" /></a>
+          <a href="#"><img src="/images/icons/youtube.svg" alt="YouTube" /></a>
+          <a href="#"
+            ><img src="/images/icons/linkedin.svg" alt="LinkedIn"
+          /></a>
+          <a href="#"><img src="/images/icons/podcast.svg" alt="Podcast" /></a>
+          <a href="#"
+            ><img src="/images/icons/snapchat.svg" alt="Snapchat"
+          /></a>
+          <a href="#"><img src="/images/icons/twitch.svg" alt="Twitch" /></a>
+          <a href="#"><img src="/images/icons/spotify.svg" alt="Spotify" /></a>
+          <a href="#"
+            ><img src="/images/icons/whatsapp.svg" alt="WhatsApp"
+          /></a>
+          <a href="#"
+            ><img src="/images/icons/telegram.svg" alt="Telegram"
+          /></a>
         </div>
       </div>
-    </div>
-  </div>
-</footer>
+      <div class="border-black"></div>
+      <div class="end">
+        <p>
+          © 2025 Dorna Sports SL. All rights reserved. All trademarks are the
+          property of their respective owners.
+        </p>
+      </div>
+    </footer>
 
-<script src="bootstrap.bundle.min.js"></script>
-<script>
-// Load Latest Updates
-fetch('/api/results')
-    .then(response => response.json())
-    .then(results => {
-        const latestUpdates = document.getElementById('latest-updates');
-        const latestResult = results[0]; // Most recent result
+    <script src="bootstrap.bundle.min.js"></script>
+    <script>
+      // Load Latest Updates
+      fetch("/api/results")
+        .then((response) => response.json())
+        .then((results) => {
+          const latestUpdates = document.getElementById("latest-updates");
+          const latestResult = results[0]; // Most recent result
 
-        // Add latest race result
-        latestUpdates.innerHTML += `
+          // Add latest race result
+          latestUpdates.innerHTML += `
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-body">
@@ -214,19 +355,23 @@ fetch('/api/results')
                 </div>
             </div>
         `;
-    });
+        });
 
-// Load Next Race
-fetch('/api/calendar')
-    .then(response => response.json())
-    .then(races => {
-        const today = new Date();
-        const nextRace = races.find(race => new Date(race.start_date) > today);
-        
-        if (nextRace) {
-            const latestUpdates = document.getElementById('latest-updates');
-            const startDate = new Date(nextRace.start_date).toLocaleDateString();
-            
+      // Load Next Race
+      fetch("/api/calendar")
+        .then((response) => response.json())
+        .then((races) => {
+          const today = new Date();
+          const nextRace = races.find(
+            (race) => new Date(race.start_date) > today
+          );
+
+          if (nextRace) {
+            const latestUpdates = document.getElementById("latest-updates");
+            const startDate = new Date(
+              nextRace.start_date
+            ).toLocaleDateString();
+
             latestUpdates.innerHTML += `
                 <div class="col-md-4">
                     <div class="card">
@@ -239,17 +384,17 @@ fetch('/api/calendar')
                     </div>
                 </div>
             `;
-        }
-    });
+          }
+        });
 
-// Load Championship Leader
-fetch('/api/riders')
-    .then(response => response.json())
-    .then(riders => {
-        const leader = riders.sort((a, b) => b.points - a.points)[0];
-        const latestUpdates = document.getElementById('latest-updates');
-        
-        latestUpdates.innerHTML += `
+      // Load Championship Leader
+      fetch("/api/riders")
+        .then((response) => response.json())
+        .then((riders) => {
+          const leader = riders.sort((a, b) => b.points - a.points)[0];
+          const latestUpdates = document.getElementById("latest-updates");
+
+          latestUpdates.innerHTML += `
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-body">
@@ -261,8 +406,7 @@ fetch('/api/riders')
                 </div>
             </div>
         `;
-    });
-</script>
-
-</body>
+        });
+    </script>
+  </body>
 </html>

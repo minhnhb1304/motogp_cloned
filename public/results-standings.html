@@ -1,550 +1,681 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <title>MotoGP - Results & Standings</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
     <style>
-        .page-header {
-            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
-                        url('https://photos.motogp.com/2024/02/06/2024-motogp-sepang-test-day-1-1.gallery_full_top_lg.jpg');
-            background-size: cover;
-            background-position: center;
-            color: white;
-            padding: 100px 0;
-            margin-bottom: 40px;
-            text-align: center;
-            margin-top: 56px;
-        }
-        .race-select {
-            background: #f8f9fa;
-            padding: 20px;
-            margin-bottom: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
+      .page-header {
+        background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
+          url("https://photos.motogp.com/2024/02/06/2024-motogp-sepang-test-day-1-1.gallery_full_top_lg.jpg");
+        background-size: cover;
+        background-position: center;
+        color: white;
+        padding: 100px 0;
+        margin-bottom: 40px;
+        text-align: center;
+        margin-top: 56px;
+      }
+      .race-select {
+        background: #f8f9fa;
+        padding: 20px;
+        margin-bottom: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .podium {
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        margin: 40px auto;
+        height: 400px;
+        position: relative;
+        max-width: 800px;
+        padding: 0 20px;
+        gap: 15px;
+      }
+      .podium-position {
+        text-align: center;
+        position: relative;
+        width: 200px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .podium-position.first {
+        order: 2;
+        height: 100%;
+        margin-top: -40px;
+      }
+      .podium-position.second {
+        order: 1;
+        height: 75%;
+        margin-top: 40px;
+      }
+      .podium-position.third {
+        order: 3;
+        height: 60%;
+        margin-top: 80px;
+      }
+      .podium-block {
+        background: var(--motogp-red);
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 20px 15px;
+        color: white;
+        border-radius: 8px 8px 0 0;
+        position: relative;
+        overflow: visible;
+        transition: transform 0.3s ease;
+      }
+      .podium-block:hover {
+        transform: translateY(-5px);
+      }
+      .podium-position.first .podium-block {
+        background: #ffd700;
+        color: black;
+        box-shadow: 0 8px 16px rgba(255, 215, 0, 0.3);
+      }
+      .podium-position.second .podium-block {
+        background: #c0c0c0;
+        color: black;
+        box-shadow: 0 8px 16px rgba(192, 192, 192, 0.3);
+      }
+      .podium-position.third .podium-block {
+        background: #cd7f32;
+        box-shadow: 0 8px 16px rgba(205, 127, 50, 0.3);
+      }
+      .rider-image {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        margin: 0 auto 15px;
+        overflow: hidden;
+        border: 4px solid rgba(255, 255, 255, 0.7);
+        position: relative;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        flex-shrink: 0;
+        background-color: #fff;
+      }
+      .podium-position.first .rider-image {
+        width: 140px;
+        height: 140px;
+        border-width: 5px;
+      }
+      .position-number {
+        font-size: 2em;
+        font-weight: bold;
+        margin-top: 10px;
+        color: var(--motogp-red);
+      }
+      .race-time {
+        font-size: 0.9em;
+        margin-top: 5px;
+        opacity: 0.8;
+      }
+      .standings-card {
+        transition: transform 0.3s;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      .standings-card:hover {
+        transform: translateY(-5px);
+      }
+      .position-cell {
+        width: 80px;
+        text-align: center;
+      }
+      .position-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #f8f9fa;
+        font-weight: bold;
+      }
+      .podium-position-1 .position-badge {
+        background-color: #ffd700;
+        color: black;
+      }
+      .podium-position-2 .position-badge {
+        background-color: #c0c0c0;
+        color: black;
+      }
+      .podium-position-3 .position-badge {
+        background-color: #cd7f32;
+        color: white;
+      }
+      .podium-position-1,
+      .podium-position-2,
+      .podium-position-3 {
+        background-color: rgba(0, 0, 0, 0.02);
+      }
+      .section-title {
+        position: relative;
+        margin-bottom: 30px;
+        padding-bottom: 10px;
+      }
+      .section-title::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 60px;
+        height: 3px;
+        background-color: var(--motogp-red);
+      }
+      .table {
+        margin: 20px 0;
+        border-collapse: separate;
+        border-spacing: 0;
+      }
+      .table > :not(caption) > * > * {
+        padding: 1rem;
+      }
+      .table thead th {
+        border-bottom: 2px solid var(--motogp-red);
+        background-color: #343a40;
+        color: white;
+        font-weight: 600;
+      }
+      .table tbody tr {
+        transition: background-color 0.2s;
+      }
+      .table tbody tr:hover {
+        background-color: rgba(0, 0, 0, 0.02);
+      }
+      .rider-info {
+        line-height: 1.4;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+      .rider-info strong {
+        display: block;
+        margin-bottom: 4px;
+      }
+      .rider-info small {
+        opacity: 0.7;
+      }
+      .standings-rider-image {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--motogp-red);
+        margin-right: 10px;
+      }
+      .standings-team-image {
+        width: 80px;
+        height: 40px;
+        object-fit: contain;
+        margin-right: 15px;
+      }
+      .team-info {
+        display: flex;
+        align-items: center;
+      }
+      .points-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        background: var(--motogp-red);
+        color: white;
+        border-radius: 20px;
+        font-weight: bold;
+        min-width: 40px;
+        text-align: center;
+      }
+      .nav-pills {
+        margin-bottom: 2rem;
+      }
+      .nav-pills .nav-link {
+        color: #333;
+        border-radius: 20px;
+        padding: 8px 20px;
+        margin: 0 5px;
+      }
+      .nav-pills .nav-link.active {
+        background-color: var(--motogp-red);
+      }
+      #noRaceSelected {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 40px;
+        margin: 20px 0;
+      }
+      @media (max-width: 768px) {
         .podium {
-            display: flex;
-            justify-content: center;
-            align-items: flex-end;
-            margin: 40px auto;
-            height: 400px;
-            position: relative;
-            max-width: 800px;
-            padding: 0 20px;
-            gap: 15px;
+          height: auto;
+          flex-direction: column;
+          align-items: center;
+          margin-top: 20px;
+          gap: 20px;
         }
         .podium-position {
-            text-align: center;
-            position: relative;
-            width: 200px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .podium-position.first {
-            order: 2;
-            height: 100%;
-            margin-top: -40px;
-        }
-        .podium-position.second {
-            order: 1;
-            height: 75%;
-            margin-top: 40px;
-        }
-        .podium-position.third {
-            order: 3;
-            height: 60%;
-            margin-top: 80px;
+          width: 100%;
+          max-width: 300px;
+          margin: 0 !important;
+          height: auto !important;
         }
         .podium-block {
-            background: var(--motogp-red);
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-end;
-            padding: 20px 15px;
-            color: white;
-            border-radius: 8px 8px 0 0;
-            position: relative;
-            overflow: visible;
-            transition: transform 0.3s ease;
-        }
-        .podium-block:hover {
-            transform: translateY(-5px);
-        }
-        .podium-position.first .podium-block {
-            background: #ffd700;
-            color: black;
-            box-shadow: 0 8px 16px rgba(255, 215, 0, 0.3);
-        }
-        .podium-position.second .podium-block {
-            background: #c0c0c0;
-            color: black;
-            box-shadow: 0 8px 16px rgba(192, 192, 192, 0.3);
-        }
-        .podium-position.third .podium-block {
-            background: #cd7f32;
-            box-shadow: 0 8px 16px rgba(205, 127, 50, 0.3);
-        }
-        .rider-image {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            margin: 0 auto 15px;
-            overflow: hidden;
-            border: 4px solid rgba(255,255,255,0.7);
-            position: relative;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-            flex-shrink: 0;
-            background-color: #fff;
+          min-height: 250px;
         }
         .podium-position.first .rider-image {
-            width: 140px;
-            height: 140px;
-            border-width: 5px;
+          width: 120px;
+          height: 120px;
+          border-width: 4px;
         }
-        .position-number {
-            font-size: 2em;
-            font-weight: bold;
-            margin-top: 10px;
-            color: var(--motogp-red);
+        .table-responsive {
+          margin: 0 -15px;
+          padding: 0 15px;
+          width: calc(100% + 30px);
         }
-        .race-time {
-            font-size: 0.9em;
-            margin-top: 5px;
-            opacity: 0.8;
-        }
-        .standings-card {
-            transition: transform 0.3s;
-            border: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .standings-card:hover {
-            transform: translateY(-5px);
-        }
-        .position-cell {
-            width: 80px;
-            text-align: center;
-        }
-        .position-badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            background: #f8f9fa;
-            font-weight: bold;
-        }
-        .podium-position-1 .position-badge {
-            background-color: #ffd700;
-            color: black;
-        }
-        .podium-position-2 .position-badge {
-            background-color: #c0c0c0;
-            color: black;
-        }
-        .podium-position-3 .position-badge {
-            background-color: #cd7f32;
-            color: white;
-        }
-        .podium-position-1, .podium-position-2, .podium-position-3 {
-            background-color: rgba(0,0,0,0.02);
-        }
-        .section-title {
-            position: relative;
-            margin-bottom: 30px;
-            padding-bottom: 10px;
-        }
-        .section-title::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 60px;
-            height: 3px;
-            background-color: var(--motogp-red);
-        }
-        .table {
-            margin: 20px 0;
-            border-collapse: separate;
-            border-spacing: 0;
-        }
-        .table > :not(caption) > * > * {
-            padding: 1rem;
-        }
-        .table thead th {
-            border-bottom: 2px solid var(--motogp-red);
-            background-color: #343a40;
-            color: white;
-            font-weight: 600;
-        }
-        .table tbody tr {
-            transition: background-color 0.2s;
-        }
-        .table tbody tr:hover {
-            background-color: rgba(0,0,0,0.02);
-        }
-        .rider-info {
-            line-height: 1.4;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .rider-info strong {
-            display: block;
-            margin-bottom: 4px;
-        }
-        .rider-info small {
-            opacity: 0.7;
-        }
-        .standings-rider-image {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid var(--motogp-red);
-            margin-right: 10px;
-        }
-        .standings-team-image {
-            width: 80px;
-            height: 40px;
-            object-fit: contain;
-            margin-right: 15px;
-        }
-        .team-info {
-            display: flex;
-            align-items: center;
-        }
-        .points-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            background: var(--motogp-red);
-            color: white;
-            border-radius: 20px;
-            font-weight: bold;
-            min-width: 40px;
-            text-align: center;
-        }
-        .nav-pills {
-            margin-bottom: 2rem;
-        }
-        .nav-pills .nav-link {
-            color: #333;
-            border-radius: 20px;
-            padding: 8px 20px;
-            margin: 0 5px;
-        }
-        .nav-pills .nav-link.active {
-            background-color: var(--motogp-red);
-        }
-        #noRaceSelected {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 40px;
-            margin: 20px 0;
-        }
-        @media (max-width: 768px) {
-            .podium {
-                height: auto;
-                flex-direction: column;
-                align-items: center;
-                margin-top: 20px;
-                gap: 20px;
-            }
-            .podium-position {
-                width: 100%;
-                max-width: 300px;
-                margin: 0 !important;
-                height: auto !important;
-            }
-            .podium-block {
-                min-height: 250px;
-            }
-            .podium-position.first .rider-image {
-                width: 120px;
-                height: 120px;
-                border-width: 4px;
-            }
-            .table-responsive {
-                margin: 0 -15px;
-                padding: 0 15px;
-                width: calc(100% + 30px);
-            }
-        }
-        .rider-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            position: absolute;
-            top: 0;
-            left: 0;
-            background-color: #f8f9fa;
-        }
+      }
+      .rider-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        position: absolute;
+        top: 0;
+        left: 0;
+        background-color: #f8f9fa;
+      }
     </style>
-</head>
-<body>
-
-<nav class="navbar navbar-expand-sm bg-light navbar-light fixed-top">
-    <div class="container">
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-sm bg-light navbar-light fixed-top">
+      <div class="container">
         <a class="navbar-brand" href="index.html">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/MotoGP_logo_%282024%29.svg/1200px-MotoGP_logo_%282024%29.svg.png" alt="MotoGP Logo" style="height:48px;">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/MotoGP_logo_%282024%29.svg/1200px-MotoGP_logo_%282024%29.svg.png"
+            alt="MotoGP Logo"
+            style="height: 48px"
+          />
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link" href="calendar.html">CALENDAR</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="riders-teams.html">RIDERS & TEAMS</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="results-standings.html">RESULTS & STANDINGS</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="login.html">LOGIN</a>
-                </li>
-            </ul>
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a class="nav-link" href="calendar.html">CALENDAR</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="riders-teams.html">RIDERS & TEAMS</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="results-standings.html"
+                >RESULTS & STANDINGS</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="login.html">LOGIN</a>
+            </li>
+          </ul>
         </div>
-    </div>
-</nav>
+      </div>
+    </nav>
 
-<div class="page-header">
-    <div class="container">
+    <div class="page-header">
+      <div class="container">
         <h1>Results & Standings</h1>
-        <p class="lead">Track the latest race results and championship standings</p>
+        <p class="lead">
+          Track the latest race results and championship standings
+        </p>
+      </div>
     </div>
-</div>
 
-<div class="container">
-    <!-- Tab Navigation -->
-    <ul class="nav nav-pills mb-4 justify-content-center" role="tablist">
+    <div class="container">
+      <!-- Tab Navigation -->
+      <ul class="nav nav-pills mb-4 justify-content-center" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="results-tab" data-bs-toggle="pill" data-bs-target="#results-section" type="button" role="tab">Race Results</button>
+          <button
+            class="nav-link active"
+            id="results-tab"
+            data-bs-toggle="pill"
+            data-bs-target="#results-section"
+            type="button"
+            role="tab"
+          >
+            Race Results
+          </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link" id="standings-tab" data-bs-toggle="pill" data-bs-target="#standings-section" type="button" role="tab">Championship Standings</button>
+          <button
+            class="nav-link"
+            id="standings-tab"
+            data-bs-toggle="pill"
+            data-bs-target="#standings-section"
+            type="button"
+            role="tab"
+          >
+            Championship Standings
+          </button>
         </li>
-    </ul>
+      </ul>
 
-    <!-- Tab Content -->
-    <div class="tab-content">
+      <!-- Tab Content -->
+      <div class="tab-content">
         <!-- Race Results Section -->
-        <div class="tab-pane fade show active" id="results-section" role="tabpanel">
-            <h2 class="section-title">RACE RESULTS</h2>
-            <div class="race-select">
-                <div class="row">
-                    <div class="col-md-6">
-                        <label for="raceSelect" class="form-label">Select a completed race:</label>
-                        <select class="form-select" id="raceSelect">
-                            <option value="">Choose a race...</option>
-                        </select>
-                    </div>
-                </div>
+        <div
+          class="tab-pane fade show active"
+          id="results-section"
+          role="tabpanel"
+        >
+          <h2 class="section-title">RACE RESULTS</h2>
+          <div class="race-select">
+            <div class="row">
+              <div class="col-md-6">
+                <label for="raceSelect" class="form-label"
+                  >Select a completed race:</label
+                >
+                <select class="form-select" id="raceSelect">
+                  <option value="">Choose a race...</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div id="noRaceSelected" class="text-center py-5">
+            <h3>Please select a race to view results</h3>
+            <p class="text-muted">Choose a race from the dropdown menu above</p>
+          </div>
+
+          <div id="raceMessage" class="text-center py-5" style="display: none">
+            <div class="alert alert-info">
+              <h3 class="race-name mb-3"></h3>
+              <p class="race-message mb-2"></p>
+              <p class="race-dates text-muted"></p>
+            </div>
+          </div>
+
+          <div id="raceResults" style="display: none">
+            <!-- Podium Display -->
+            <div class="podium" id="podiumDisplay">
+              <!-- Podium will be populated by JavaScript -->
             </div>
 
-            <div id="noRaceSelected" class="text-center py-5">
-                <h3>Please select a race to view results</h3>
-                <p class="text-muted">Choose a race from the dropdown menu above</p>
+            <!-- Full Race Results -->
+            <div class="table-responsive">
+              <table class="table table-striped" id="resultsTable">
+                <thead class="table-dark">
+                  <tr>
+                    <th>Position</th>
+                    <th>Rider</th>
+                    <th>Team</th>
+                    <th>Time</th>
+                    <th>Points</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Results will be loaded here -->
+                </tbody>
+              </table>
             </div>
-
-            <div id="raceMessage" class="text-center py-5" style="display: none;">
-                <div class="alert alert-info">
-                    <h3 class="race-name mb-3"></h3>
-                    <p class="race-message mb-2"></p>
-                    <p class="race-dates text-muted"></p>
-                </div>
-            </div>
-
-            <div id="raceResults" style="display: none;">
-                <!-- Podium Display -->
-                <div class="podium" id="podiumDisplay">
-                    <!-- Podium will be populated by JavaScript -->
-                </div>
-
-                <!-- Full Race Results -->
-                <div class="table-responsive">
-                    <table class="table table-striped" id="resultsTable">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Position</th>
-                                <th>Rider</th>
-                                <th>Team</th>
-                                <th>Time</th>
-                                <th>Points</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <!-- Results will be loaded here -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+          </div>
         </div>
 
         <!-- Championship Standings Section -->
         <div class="tab-pane fade" id="standings-section" role="tabpanel">
-            <h2 class="section-title">CHAMPIONSHIP STANDINGS</h2>
-            <div class="row">
-                <!-- Rider Championship -->
-                <div class="col-md-6">
-                    <div class="card standings-card">
-                        <div class="card-header bg-dark text-white">
-                            <h5 class="mb-0">Rider Championship</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table" id="riderStandingsTable">
-                                    <thead>
-                                        <tr>
-                                            <th>Pos</th>
-                                            <th>Rider</th>
-                                            <th>Points</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Constructor Championship -->
-                <div class="col-md-6">
-                    <div class="card standings-card">
-                        <div class="card-header bg-dark text-white">
-                            <h5 class="mb-0">Constructor Championship</h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table" id="constructorStandingsTable">
-                                    <thead>
-                                        <tr>
-                                            <th>Pos</th>
-                                            <th>Team</th>
-                                            <th>Points</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody></tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<footer class="bg-dark text-white mt-5">
-    <div class="container py-4">
-        <div class="row">
+          <h2 class="section-title">CHAMPIONSHIP STANDINGS</h2>
+          <div class="row">
+            <!-- Rider Championship -->
             <div class="col-md-6">
-                <h5>About MotoGP™</h5>
-                <p>MotoGP™ is the premier motorcycle racing world championship; an eighteen-race series visiting fourteen countries, four continents and with pan-global television coverage.</p>
-            </div>
-            <div class="col-md-3">
-                <h5>Quick Links</h5>
-                <ul class="list-unstyled">
-                    <li><a href="calendar.html" class="text-white">Calendar</a></li>
-                    <li><a href="riders-teams.html" class="text-white">Riders & Teams</a></li>
-                    <li><a href="results-standings.html" class="text-white">Results & Standings</a></li>
-                </ul>
-            </div>
-            <div class="col-md-3">
-                <h5>Follow Us</h5>
-                <div class="d-flex gap-3">
-                    <a href="#" class="text-white"><i class="bi bi-facebook"></i></a>
-                    <a href="#" class="text-white"><i class="bi bi-twitter"></i></a>
-                    <a href="#" class="text-white"><i class="bi bi-instagram"></i></a>
-                    <a href="#" class="text-white"><i class="bi bi-youtube"></i></a>
+              <div class="card standings-card">
+                <div class="card-header bg-dark text-white">
+                  <h5 class="mb-0">Rider Championship</h5>
                 </div>
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table" id="riderStandingsTable">
+                      <thead>
+                        <tr>
+                          <th>Pos</th>
+                          <th>Rider</th>
+                          <th>Points</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
             </div>
-        </div>
-    </div>
-</footer>
 
-<script src="bootstrap.bundle.min.js"></script>
-<script>
-// Load Race List
-fetch('/api/calendar')
-    .then(response => response.json())
-    .then(races => {
-        const raceSelect = document.getElementById('raceSelect');
-        raceSelect.innerHTML = '<option value="">Choose a race...</option>';
-        
-        // Filter races that have results
-        const completedRaces = races.filter(race => race.has_results > 0);
-        
-        completedRaces.forEach(race => {
+            <!-- Constructor Championship -->
+            <div class="col-md-6">
+              <div class="card standings-card">
+                <div class="card-header bg-dark text-white">
+                  <h5 class="mb-0">Constructor Championship</h5>
+                </div>
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table class="table" id="constructorStandingsTable">
+                      <thead>
+                        <tr>
+                          <th>Pos</th>
+                          <th>Team</th>
+                          <th>Points</th>
+                        </tr>
+                      </thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <section class="newsletter">
+      <h2>GET THE OFFICIAL MOTOGP™ NEWSLETTER!</h2>
+      <p>
+        Create a MotoGP™ account now and gain access to exclusive content, such
+        as the MotoGP™ Newsletter, which features GP Reports, incredible videos
+        and other interesting information about our sport.
+      </p>
+      <a href="#" class="btn-signup">SIGN UP FOR FREE</a>
+    </section>
+
+    <footer>
+      <img class="logo" src="/images/footer1.png" alt="" class="motogp" />
+      <p>Official Sponsors</p>
+      <div class="logong">
+        <ul>
+          <li>
+            <a href=""><img src="/images/footer2.png" alt="" /></a>
+          </li>
+          <li>
+            <a href=""><img src="/images/footer3.png" alt="" /></a>
+          </li>
+          <li>
+            <a href=""><img src="/images/footer4.png" alt="" /></a>
+          </li>
+          <li>
+            <a href=""><img src="/images/footer5.png" alt="" /></a>
+          </li>
+          <li>
+            <a href=""><img src="/images/footer6.png" alt="" /></a>
+          </li>
+          <li>
+            <a href=""><img src="/images/footer7.png" alt="" /></a>
+          </li>
+        </ul>
+      </div>
+      <div class="container">
+        <ul class="media">
+          <li><a href="" class="ma">Media & Commercial</a></li>
+          <li><a href="">Official Sponsors</a></li>
+          <li><a href="">TV Broadcast</a></li>
+          <li><a href="">MotoGP™ Apps</a></li>
+        </ul>
+        <ul class="media">
+          <li><a href="" class="ma">Media & Commercial</a></li>
+          <li><a href="">Official Sponsors</a></li>
+          <li><a href="">TV Broadcast</a></li>
+          <li><a href="">MotoGP™ Apps</a></li>
+        </ul>
+        <ul class="media">
+          <li><a href="" class="ma">Media & Commercial</a></li>
+          <li><a href="">Official Sponsors</a></li>
+          <li><a href="">TV Broadcast</a></li>
+          <li><a href="">MotoGP™ Apps</a></li>
+        </ul>
+        <ul class="media">
+          <li><a href="" class="ma">Media & Commercial</a></li>
+          <li><a href="">Official Sponsors</a></li>
+          <li><a href="">TV Broadcast</a></li>
+          <li><a href="">MotoGP™ Apps</a></li>
+        </ul>
+        <ul class="media">
+          <li><a href="" class="ma">Media & Commercial</a></li>
+          <li><a href="">Official Sponsors</a></li>
+          <li><a href="">TV Broadcast</a></li>
+          <li><a href="">MotoGP™ Apps</a></li>
+        </ul>
+      </div>
+      <div class="contact">
+        <div class="app-section">
+          <p>Download the Official<br /><strong>MotoGP™ App</strong></p>
+          <div class="app-links">
+            <a href="#"><img src="/images/f1.webp" alt="App Store" /></a>
+            <a href="#"><img src="/images/f2.webp" alt="Google Play" /></a>
+          </div>
+        </div>
+
+        <div class="social-icons">
+          <a href="#"
+            ><img src="/images/icons/facebook.svg" alt="Facebook"
+          /></a>
+          <a href="#"
+            ><img src="/images/icons/instagram.svg" alt="Instagram"
+          /></a>
+          <a href="#"><img src="/images/icons/threads.svg" alt="Threads" /></a>
+          <a href="#"><img src="/images/icons/x.svg" alt="X" /></a>
+          <a href="#"><img src="/images/icons/tiktok.svg" alt="TikTok" /></a>
+          <a href="#"><img src="/images/icons/youtube.svg" alt="YouTube" /></a>
+          <a href="#"
+            ><img src="/images/icons/linkedin.svg" alt="LinkedIn"
+          /></a>
+          <a href="#"><img src="/images/icons/podcast.svg" alt="Podcast" /></a>
+          <a href="#"
+            ><img src="/images/icons/snapchat.svg" alt="Snapchat"
+          /></a>
+          <a href="#"><img src="/images/icons/twitch.svg" alt="Twitch" /></a>
+          <a href="#"><img src="/images/icons/spotify.svg" alt="Spotify" /></a>
+          <a href="#"
+            ><img src="/images/icons/whatsapp.svg" alt="WhatsApp"
+          /></a>
+          <a href="#"
+            ><img src="/images/icons/telegram.svg" alt="Telegram"
+          /></a>
+        </div>
+      </div>
+      <div class="border-black"></div>
+      <div class="end">
+        <p>
+          © 2025 Dorna Sports SL. All rights reserved. All trademarks are the
+          property of their respective owners.
+        </p>
+      </div>
+    </footer>
+
+    <script src="bootstrap.bundle.min.js"></script>
+    <script>
+      // Load Race List
+      fetch("/api/calendar")
+        .then((response) => response.json())
+        .then((races) => {
+          const raceSelect = document.getElementById("raceSelect");
+          raceSelect.innerHTML = '<option value="">Choose a race...</option>';
+
+          // Filter races that have results
+          const completedRaces = races.filter((race) => race.has_results > 0);
+
+          completedRaces.forEach((race) => {
             raceSelect.innerHTML += `
                 <option value="${race.calendar_id}">${race.race_name}</option>
             `;
-        });
+          });
 
-        // If there are completed races, select the most recent one by default
-        if (completedRaces.length > 0) {
+          // If there are completed races, select the most recent one by default
+          if (completedRaces.length > 0) {
             raceSelect.value = completedRaces[0].calendar_id;
             loadRaceResults(completedRaces[0].calendar_id);
-        }
-    })
-    .catch(error => {
-        console.error('Error loading races:', error);
-        const raceSelect = document.getElementById('raceSelect');
-        raceSelect.innerHTML = '<option value="">Error loading races</option>';
-        raceSelect.disabled = true;
-    });
+          }
+        })
+        .catch((error) => {
+          console.error("Error loading races:", error);
+          const raceSelect = document.getElementById("raceSelect");
+          raceSelect.innerHTML =
+            '<option value="">Error loading races</option>';
+          raceSelect.disabled = true;
+        });
 
-// Load Race Results
-function loadRaceResults(raceId) {
-    document.getElementById('noRaceSelected').style.display = 'none';
-    document.getElementById('raceMessage').style.display = 'none';
-    document.getElementById('raceResults').style.display = 'none';
+      // Load Race Results
+      function loadRaceResults(raceId) {
+        document.getElementById("noRaceSelected").style.display = "none";
+        document.getElementById("raceMessage").style.display = "none";
+        document.getElementById("raceResults").style.display = "none";
 
-    fetch(`/api/results?race=${raceId}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.race_status !== 'finished') {
-                // Show message for upcoming or ongoing races
-                const raceMessage = document.getElementById('raceMessage');
-                raceMessage.querySelector('.race-name').textContent = data.race_name;
-                raceMessage.querySelector('.race-message').textContent = data.message;
-                
-                // Format dates
-                const startDate = new Date(data.start_date).toLocaleDateString();
-                const endDate = new Date(data.end_date).toLocaleDateString();
-                raceMessage.querySelector('.race-dates').textContent = 
-                    `Race dates: ${startDate} - ${endDate}`;
-                
-                raceMessage.style.display = 'block';
-                return;
+        fetch(`/api/results?race=${raceId}`)
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.race_status !== "finished") {
+              // Show message for upcoming or ongoing races
+              const raceMessage = document.getElementById("raceMessage");
+              raceMessage.querySelector(".race-name").textContent =
+                data.race_name;
+              raceMessage.querySelector(".race-message").textContent =
+                data.message;
+
+              // Format dates
+              const startDate = new Date(data.start_date).toLocaleDateString();
+              const endDate = new Date(data.end_date).toLocaleDateString();
+              raceMessage.querySelector(
+                ".race-dates"
+              ).textContent = `Race dates: ${startDate} - ${endDate}`;
+
+              raceMessage.style.display = "block";
+              return;
             }
 
             // Show results for finished races
-            document.getElementById('raceResults').style.display = 'block';
-            
+            document.getElementById("raceResults").style.display = "block";
+
             const results = data.results;
             // Update Podium
-            const podium = document.getElementById('podiumDisplay');
-            podium.innerHTML = '';
-            
+            const podium = document.getElementById("podiumDisplay");
+            podium.innerHTML = "";
+
             // Show top 3 on podium
             const top3 = results.slice(0, 3);
-            const positions = ['second', 'first', 'third'];
+            const positions = ["second", "first", "third"];
             top3.forEach((result, index) => {
-                podium.innerHTML += `
+              podium.innerHTML += `
                     <div class="podium-position ${positions[index]}">
                         <div class="podium-block">
                             <div class="rider-image">
-                                <img src="${result.rider_image ? `/images/rider/${result.rider_image}` : '/images/rider/default-rider.webp'}" 
+                                <img src="${
+                                  result.rider_image
+                                    ? `/images/rider/${result.rider_image}`
+                                    : "/images/rider/default-rider.webp"
+                                }" 
                                      alt="${result.rider_name}"
                                      onerror="this.onerror=null; this.src='/images/rider/default-rider.webp';">
                             </div>
@@ -552,97 +683,128 @@ function loadRaceResults(raceId) {
                             <small>${result.team_name}</small>
                             <div class="race-time">${result.race_time}</div>
                         </div>
-                        <div class="position-number">${index === 1 ? '1st' : index === 0 ? '2nd' : '3rd'}</div>
+                        <div class="position-number">${
+                          index === 1 ? "1st" : index === 0 ? "2nd" : "3rd"
+                        }</div>
                     </div>
                 `;
             });
 
             // Update Results Table
-            const tbody = document.querySelector('#resultsTable tbody');
-            tbody.innerHTML = '';
-            results.forEach(result => {
-                tbody.innerHTML += `
-                    <tr class="${result.position <= 3 ? 'podium-position-' + result.position : ''}">
+            const tbody = document.querySelector("#resultsTable tbody");
+            tbody.innerHTML = "";
+            results.forEach((result) => {
+              tbody.innerHTML += `
+                    <tr class="${
+                      result.position <= 3
+                        ? "podium-position-" + result.position
+                        : ""
+                    }">
                         <td class="position-cell">
-                            <span class="position-badge">${result.position}</span>
+                            <span class="position-badge">${
+                              result.position
+                            }</span>
                         </td>
                         <td>
                             <div class="rider-info">
                                 <strong>${result.rider_name}</strong>
-                                <small class="text-muted d-block">${result.team_name}</small>
+                                <small class="text-muted d-block">${
+                                  result.team_name
+                                }</small>
                             </div>
                         </td>
                         <td>${result.team_name}</td>
-                        <td>${result.race_time || 'DNF'}</td>
+                        <td>${result.race_time || "DNF"}</td>
                         <td>
                             <span class="points-badge">${result.points}</span>
                         </td>
                     </tr>
                 `;
             });
-        })
-        .catch(error => {
-            console.error('Error loading race results:', error);
+          })
+          .catch((error) => {
+            console.error("Error loading race results:", error);
             // Show error message
-            const raceMessage = document.getElementById('raceMessage');
-            raceMessage.querySelector('.race-name').textContent = 'Error';
-            raceMessage.querySelector('.race-message').textContent = 'Failed to load race results. Please try again.';
-            raceMessage.querySelector('.race-dates').textContent = '';
-            raceMessage.style.display = 'block';
-        });
-}
+            const raceMessage = document.getElementById("raceMessage");
+            raceMessage.querySelector(".race-name").textContent = "Error";
+            raceMessage.querySelector(".race-message").textContent =
+              "Failed to load race results. Please try again.";
+            raceMessage.querySelector(".race-dates").textContent = "";
+            raceMessage.style.display = "block";
+          });
+      }
 
-// Load Championship Standings
-function loadStandings() {
-    // Rider Standings
-    fetch('/api/standings/riders')
-        .then(response => response.json())
-        .then(riders => {
-            const tbody = document.querySelector('#riderStandingsTable tbody');
-            tbody.innerHTML = '';
-            riders.sort((a, b) => b.points - a.points)
-                .forEach((rider, index) => {
-                    tbody.innerHTML += `
-                        <tr class="${index < 3 ? 'podium-position-' + (index + 1) : ''}">
+      // Load Championship Standings
+      function loadStandings() {
+        // Rider Standings
+        fetch("/api/standings/riders")
+          .then((response) => response.json())
+          .then((riders) => {
+            const tbody = document.querySelector("#riderStandingsTable tbody");
+            tbody.innerHTML = "";
+            riders
+              .sort((a, b) => b.points - a.points)
+              .forEach((rider, index) => {
+                tbody.innerHTML += `
+                        <tr class="${
+                          index < 3 ? "podium-position-" + (index + 1) : ""
+                        }">
                             <td class="position-cell">
                                 <span class="position-badge">${index + 1}</span>
                             </td>
                             <td>
                                 <div class="rider-info">
-                                    <img src="${rider.image ? `/images/rider/${rider.image}` : '/images/rider/default-rider.webp'}" 
+                                    <img src="${
+                                      rider.image
+                                        ? `/images/rider/${rider.image}`
+                                        : "/images/rider/default-rider.webp"
+                                    }" 
                                          class="standings-rider-image"
                                          alt="${rider.name}"
                                          onerror="this.onerror=null; this.src='/images/rider/default-rider.webp';">
                                     <div>
                                         <strong>${rider.name}</strong>
-                                        <small class="text-muted d-block">${rider.team}</small>
+                                        <small class="text-muted d-block">${
+                                          rider.team
+                                        }</small>
                                     </div>
                                 </div>
                             </td>
                             <td>
-                                <span class="points-badge">${rider.points}</span>
+                                <span class="points-badge">${
+                                  rider.points
+                                }</span>
                             </td>
                         </tr>
                     `;
-                });
-        });
+              });
+          });
 
-    // Constructor Standings
-    fetch('/api/standings/teams')
-        .then(response => response.json())
-        .then(teams => {
-            const tbody = document.querySelector('#constructorStandingsTable tbody');
-            tbody.innerHTML = '';
-            teams.sort((a, b) => b.points - a.points)
-                .forEach((team, index) => {
-                    tbody.innerHTML += `
-                        <tr class="${index < 3 ? 'podium-position-' + (index + 1) : ''}">
+        // Constructor Standings
+        fetch("/api/standings/teams")
+          .then((response) => response.json())
+          .then((teams) => {
+            const tbody = document.querySelector(
+              "#constructorStandingsTable tbody"
+            );
+            tbody.innerHTML = "";
+            teams
+              .sort((a, b) => b.points - a.points)
+              .forEach((team, index) => {
+                tbody.innerHTML += `
+                        <tr class="${
+                          index < 3 ? "podium-position-" + (index + 1) : ""
+                        }">
                             <td class="position-cell">
                                 <span class="position-badge">${index + 1}</span>
                             </td>
                             <td>
                                 <div class="team-info">
-                                    <img src="${team.image ? `/images/teams/${team.image}` : '/images/teams/default-team.webp'}" 
+                                    <img src="${
+                                      team.image
+                                        ? `/images/teams/${team.image}`
+                                        : "/images/teams/default-team.webp"
+                                    }" 
                                          class="standings-team-image"
                                          alt="${team.name}"
                                          onerror="this.onerror=null; this.src='/images/teams/default-team.webp';">
@@ -654,34 +816,37 @@ function loadStandings() {
                             </td>
                         </tr>
                     `;
-                });
+              });
+          });
+      }
+
+      // Race Selection Handler
+      document
+        .getElementById("raceSelect")
+        .addEventListener("change", function (e) {
+          if (e.target.value) {
+            loadRaceResults(e.target.value);
+          } else {
+            // If no race is selected, try to select the first available race
+            const firstRace = this.querySelector(
+              'option[value]:not([value=""])'
+            );
+            if (firstRace) {
+              this.value = firstRace.value;
+              loadRaceResults(firstRace.value);
+            } else {
+              document.getElementById("noRaceSelected").style.display = "block";
+              document.getElementById("raceResults").style.display = "none";
+            }
+          }
         });
-}
 
-// Race Selection Handler
-document.getElementById('raceSelect').addEventListener('change', function(e) {
-    if (e.target.value) {
-        loadRaceResults(e.target.value);
-    } else {
-        // If no race is selected, try to select the first available race
-        const firstRace = this.querySelector('option[value]:not([value=""])');
-        if (firstRace) {
-            this.value = firstRace.value;
-            loadRaceResults(firstRace.value);
-        } else {
-            document.getElementById('noRaceSelected').style.display = 'block';
-            document.getElementById('raceResults').style.display = 'none';
-        }
-    }
-});
+      // Initial load
+      loadStandings();
 
-// Initial load
-loadStandings();
-
-// Show initial message for race results
-document.getElementById('noRaceSelected').style.display = 'block';
-document.getElementById('raceResults').style.display = 'none';
-</script>
-
-</body>
-</html> 
+      // Show initial message for race results
+      document.getElementById("noRaceSelected").style.display = "block";
+      document.getElementById("raceResults").style.display = "none";
+    </script>
+  </body>
+</html>

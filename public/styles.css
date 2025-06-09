@@ -1,144 +1,473 @@
 /* Global Styles */
 :root {
-    --motogp-red: #e10600;
-    --motogp-dark: #1a1a1a;
+  --motogp-red: #e10600;
+  --motogp-dark: #1a1a1a;
 }
 
 body {
-    font-family: 'Arial', sans-serif;
-    line-height: 1.6;
+  font-family: "Arial", sans-serif;
+  line-height: 1.6;
 }
 
 /* Navigation */
 .navbar {
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .navbar-nav .nav-link {
-    font-weight: 600;
-    padding: 0.5rem 1rem;
-    transition: color 0.3s;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  transition: color 0.3s;
 }
 
 .navbar-nav .nav-link:hover {
-    color: var(--motogp-red) !important;
+  color: var(--motogp-red) !important;
+}
+
+/* hero section*/
+
+.hero-section {
+  position: relative;
+  width: 100%;
+  height: 125vh;
+  overflow: hidden;
+  font-family: "Montserrat", sans-serif; /* font gần giống motogp */
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  color: #fff;
+}
+
+.hero-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 0;
+  transition: transform 0.5s ease;
+}
+
+.hero-section:hover .hero-image {
+  transform: scale(1.05); /* phóng to nhẹ khi hover */
+}
+
+.hero-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0.3) 0%,
+    rgba(0, 0, 0, 0.85) 75%
+  );
+  z-index: 1;
+}
+
+.hero-content {
+  z-index: 2;
+  padding-left: 8vw;
+  max-width: 1300px;
+  display: flex;
+  flex-flow: column;
+  justify-content: flex-end;
+  align-items: flex-start;
+  width: 1520px;
+  height: 812px;
+  position: absolute;
+  margin-bottom: -14px;
+}
+
+.source-date {
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 0.8rem;
+  color: white;
+  font-family: "Anton", sans-serif; /* font dày và góc cạnh */
+  margin-left: -97px;
+}
+
+.hero-title {
+  font-size: 3rem; /* ~48px */
+  font-weight: 900;
+  line-height: 1.2;
+  text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  font-family: "Anton", sans-serif;
+  margin-left: -100px;
+  text-align: left;
+}
+
+.read-now-btn {
+  display: inline-block;
+  background-color: #ff0000;
+  color: white;
+  padding: 14px 36px;
+  font-weight: 700;
+  font-size: 1rem;
+  border-radius: 25px;
+  text-decoration: none;
+  letter-spacing: 1px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 0, 0, 0.4);
+  margin-left: -97px;
+}
+
+.read-now-btn:hover {
+  background-color: #cc0000;
+  box-shadow: 0 6px 20px rgba(204, 0, 0, 0.7);
+  text-decoration: none;
+}
+
+/* WTW */
+
+.watch {
+  padding: 30px 20px;
+  text-align: left;
+}
+
+.watch h2 {
+  font-size: 24px;
+  font-weight: bold;
+  color: #000;
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-family: "Anton", sans-serif;
+}
+
+.watch .container {
+  display: flex;
+  gap: 20px;
+  /* Increased gap to match .best-sellers */
+  overflow-x: auto;
+  padding: 20px;
+  /* Added padding to match .best-sellers */
+}
+
+.watch .card {
+  flex: 0 0 auto;
+  width: 260px;
+  /* Increased width to match .best-sellers */
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.watch .card img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 8px;
+  /* Keep border-radius for images */
 }
 
 /* Section Styles */
 .section-title {
-    position: relative;
-    padding-bottom: 15px;
+  position: relative;
+  padding-bottom: 15px;
 }
 
 .section-title::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 60px;
-    height: 3px;
-    background-color: var(--motogp-red);
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background-color: var(--motogp-red);
 }
 
 /* Card Styles */
 .card {
-    border: none;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    overflow: hidden;
+  border: none;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
 .card-title {
-    color: var(--motogp-dark);
-    font-weight: 600;
+  color: var(--motogp-dark);
+  font-weight: 600;
 }
 
 /* Table Styles */
 .table thead {
-    background-color: var(--motogp-dark);
-    color: white;
+  background-color: var(--motogp-dark);
+  color: white;
 }
 
 .table-striped tbody tr:nth-of-type(odd) {
-    background-color: rgba(0,0,0,0.02);
+  background-color: rgba(0, 0, 0, 0.02);
 }
 
 /* Calendar Styles */
 .calendar-item {
-    transition: transform 0.3s;
+  transition: transform 0.3s;
 }
 
 .calendar-item:hover {
-    transform: translateX(5px);
+  transform: translateX(5px);
 }
 
 /* Button Styles */
 .btn-primary {
-    background-color: var(--motogp-red);
-    border-color: var(--motogp-red);
+  background-color: var(--motogp-red);
+  border-color: var(--motogp-red);
 }
 
 .btn-primary:hover {
-    background-color: #c30500;
-    border-color: #c30500;
+  background-color: #c30500;
+  border-color: #c30500;
 }
 
 /* Footer Styles */
-footer {
-    background-color: var(--motogp-dark);
+footer .logo {
+  width: 100%;
+  margin-top: 50px;
 }
 
-footer a {
-    text-decoration: none;
-    transition: color 0.3s;
+footer p {
+  display: block;
+  text-align: center;
+  color: black;
+  font-weight: bold;
+  font-size: 12px;
 }
 
-footer a:hover {
-    color: var(--motogp-red) !important;
+.end p {
+  font-family: "MGPTextLight";
+  color: #4b5563;
+  font-size: 14px;
+}
+
+footer .logong ul {
+  display: flex;
+  justify-content: center;
+}
+
+footer .logong ul li {
+  display: inline-block;
+  padding: 30px;
+}
+
+footer ul li img {
+  width: 90px;
+}
+
+footer .container {
+  width: 1200px;
+  margin: auto;
+  display: flex;
+}
+
+footer .container ul {
+  list-style: none;
+  padding: 40px;
+}
+
+footer .container ul li {
+  padding: 10px;
+}
+
+footer .container ul li .ma {
+  font-weight: bold;
+  font-size: 18px;
+  color: black;
+  text-decoration: none;
+}
+
+footer .container ul li a {
+  color: rgb(84, 82, 82);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+footer .contact {
+  display: flex;
+  margin-top: 40px;
+}
+
+footer .contact .col-1 {
+  width: 50px;
+}
+
+footer .contact .col-2 {
+  width: 230px;
+}
+
+footer .contact .col-2 p {
+  padding: 10px;
+  font-size: 17px;
+  font-weight: bold;
+  color: black;
+}
+
+footer .contact .col-4 {
+  width: 500px;
+}
+
+footer .end p {
+  padding: 10px;
+  text-align: left;
+}
+
+.contact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  background-color: #f9fafb;
+  flex-wrap: wrap;
+  font-family: "MGPDisplay", sans-serif;
+}
+
+.app-section {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.app-section p {
+  font-size: 16px;
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.app-links a img {
+  height: 40px;
+  width: auto;
+  display: block;
+  transition: transform 0.2s ease;
+}
+
+.app-links a img:hover {
+  transform: scale(1.05);
+}
+
+.app-links {
+  display: flex;
+  gap: 10px;
+}
+
+.social-icons {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.social-icons a img {
+  width: 20px;
+  height: 20px;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+}
+
+.social-icons a img:hover {
+  opacity: 1;
+}
+
+/* newslater section */
+.newsletter {
+  width: 1500px;
+  padding: 20px 40px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  background-color: #13171b;
+  color: #fff;
+  text-align: center;
+  margin-top: 60px;
+  margin: 0 auto;
+}
+
+.newsletter h2 {
+  font-size: 28px;
+  font-weight: 900;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  font-family: "MGPDisplayBold";
+  color: white;
+}
+
+.newsletter p {
+  font-size: 21px;
+  font-family: "MGPTextLight";
+}
+
+.newsletter a {
+  font-family: "MGPTextBold";
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.btn-signup {
+  display: inline-block;
+  padding: 12px 24px;
+  background-color: white;
+  color: black;
+  font-weight: bold;
+  text-decoration: none;
+  border-radius: 999px;
+  transition: background 0.3s ease;
+  margin-top: 40px;
+  margin-bottom: 5px;
+}
+
+.btn-signup:hover {
+  background-color: #ddd;
 }
 
 /* Responsive Styles */
 @media (max-width: 768px) {
-    .hero-section {
-        padding: 100px 0;
-    }
-    
-    .section-title {
-        margin: 30px 0 20px;
-    }
-    
-    .rider-card, .team-card {
-        margin-bottom: 15px;
-    }
+  .hero-section {
+    padding: 100px 0;
+  }
+
+  .section-title {
+    margin: 30px 0 20px;
+  }
+
+  .rider-card,
+  .team-card {
+    margin-bottom: 15px;
+  }
 }
 
 /* Animation */
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.rider-card, .team-card, .calendar-item {
-    animation: fadeIn 0.6s ease-out;
+.rider-card,
+.team-card,
+.calendar-item {
+  animation: fadeIn 0.6s ease-out;
 }
 
 /* Loading States */
 .loading {
-    position: relative;
-    min-height: 200px;
+  position: relative;
+  min-height: 200px;
 }
 
 .loading::after {
-    content: 'Loading...';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: var(--motogp-red);
+  content: "Loading...";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--motogp-red);
 }

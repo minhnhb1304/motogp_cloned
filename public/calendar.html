@@ -1,362 +1,483 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+  <head>
     <title>MotoGP - Race Calendar</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="styles.css">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="bootstrap.min.css" rel="stylesheet" />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
+    />
+    <link rel="stylesheet" href="styles.css" />
     <style>
-        .page-header {
-            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
-                        url('https://photos.motogp.com/2024/02/06/2024-motogp-calendar.gallery_full_top_lg.jpg');
-            background-size: cover;
-            background-position: center;
-            color: white;
-            padding: 100px 0;
-            margin-bottom: 40px;
-            text-align: center;
-            margin-top: 56px;
-        }
-        .filter-section {
-            background: #f8f9fa;
-            padding: 20px;
-            margin-bottom: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .calendar-card {
-            transition: transform 0.3s;
-            margin-bottom: 30px;
-            border: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-        }
-        .calendar-card:hover {
-            transform: translateY(-5px);
-        }
-        .calendar-card .card-header {
-            background: var(--motogp-red);
-            color: white;
-            font-weight: bold;
-            padding: 15px;
-            position: relative;
-            border-radius: 8px 8px 0 0;
-            height: 60px;
-            display: flex;
-            align-items: center;
-        }
-        .calendar-card .card-body {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            padding: 15px;
-            min-height: auto;
-            justify-content: space-between;
-        }
-        .race-name {
-            margin-right: 80px;
-            font-size: 1.1em;
-            line-height: 1.3;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .race-status {
-            position: absolute;
-            top: 50%;
-            right: 15px;
-            transform: translateY(-50%);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.8em;
-            font-weight: bold;
-            min-width: 80px;
-            text-align: center;
-        }
-        .status-upcoming {
-            background: #28a745;
-            color: white;
-        }
-        .status-completed {
-            background: #6c757d;
-            color: white;
-        }
-        .race-info {
-            margin-bottom: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .info-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            min-height: 20px;
-        }
-        .info-item i {
-            color: var(--motogp-red);
-            font-size: 1.2em;
-            margin-top: 2px;
-            flex-shrink: 0;
-            width: 20px;
-            text-align: center;
-        }
-        .country-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex: 1;
-        }
-        .country-flag {
-            width: 30px;
-            height: 20px;
-            object-fit: contain;
-            border-radius: 4px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            background-color: #f8f9fa;
-            flex-shrink: 0;
-        }
-        .date-range {
-            flex: 1;
-            min-height: 40px;
-        }
-        .start-date, .end-date {
-            margin-bottom: 4px;
-            line-height: 1.2;
-        }
-        .month-divider {
-            margin: 40px 0 20px;
-            position: relative;
-            color: var(--motogp-red);
-            font-weight: bold;
-        }
-        .month-divider::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 0;
-            width: 60px;
-            height: 3px;
-            background-color: var(--motogp-red);
-        }
-        .countdown {
-            text-align: center;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-top: auto;
-        }
-        .countdown-timer {
-            display: flex;
-            justify-content: center;
-            gap: 30px;
-        }
-        .countdown-item {
-            text-align: center;
-            min-width: 60px;
-        }
-        .countdown-value {
-            display: block;
-            font-size: 1.5em;
-            font-weight: bold;
-            color: var(--motogp-red);
-            line-height: 1.2;
-        }
-        .countdown-label {
-            font-size: 0.8em;
-            color: #6c757d;
-            margin-top: 4px;
-        }
-        .countdown-complete {
-            color: #6c757d;
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-        .section-title {
-            position: relative;
-            margin-bottom: 30px;
-            padding-bottom: 10px;
-        }
-        .section-title::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 60px;
-            height: 3px;
-            background-color: var(--motogp-red);
-        }
+      .page-header {
+        background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
+          url("https://photos.motogp.com/2024/02/06/2024-motogp-calendar.gallery_full_top_lg.jpg");
+        background-size: cover;
+        background-position: center;
+        color: white;
+        padding: 100px 0;
+        margin-bottom: 40px;
+        text-align: center;
+        margin-top: 56px;
+      }
+      .filter-section {
+        background: #f8f9fa;
+        padding: 20px;
+        margin-bottom: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .calendar-card {
+        transition: transform 0.3s;
+        margin-bottom: 30px;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+      }
+      .calendar-card:hover {
+        transform: translateY(-5px);
+      }
+      .calendar-card .card-header {
+        background: var(--motogp-red);
+        color: white;
+        font-weight: bold;
+        padding: 15px;
+        position: relative;
+        border-radius: 8px 8px 0 0;
+        height: 60px;
+        display: flex;
+        align-items: center;
+      }
+      .calendar-card .card-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: 15px;
+        min-height: auto;
+        justify-content: space-between;
+      }
+      .race-name {
+        margin-right: 80px;
+        font-size: 1.1em;
+        line-height: 1.3;
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .race-status {
+        position: absolute;
+        top: 50%;
+        right: 15px;
+        transform: translateY(-50%);
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8em;
+        font-weight: bold;
+        min-width: 80px;
+        text-align: center;
+      }
+      .status-upcoming {
+        background: #28a745;
+        color: white;
+      }
+      .status-completed {
+        background: #6c757d;
+        color: white;
+      }
+      .race-info {
+        margin-bottom: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        min-height: 20px;
+      }
+      .info-item i {
+        color: var(--motogp-red);
+        font-size: 1.2em;
+        margin-top: 2px;
+        flex-shrink: 0;
+        width: 20px;
+        text-align: center;
+      }
+      .country-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+      }
+      .country-flag {
+        width: 30px;
+        height: 20px;
+        object-fit: contain;
+        border-radius: 4px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        background-color: #f8f9fa;
+        flex-shrink: 0;
+      }
+      .date-range {
+        flex: 1;
+        min-height: 40px;
+      }
+      .start-date,
+      .end-date {
+        margin-bottom: 4px;
+        line-height: 1.2;
+      }
+      .month-divider {
+        margin: 40px 0 20px;
+        position: relative;
+        color: var(--motogp-red);
+        font-weight: bold;
+      }
+      .month-divider::after {
+        content: "";
+        position: absolute;
+        bottom: -10px;
+        left: 0;
+        width: 60px;
+        height: 3px;
+        background-color: var(--motogp-red);
+      }
+      .countdown {
+        text-align: center;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: auto;
+      }
+      .countdown-timer {
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+      }
+      .countdown-item {
+        text-align: center;
+        min-width: 60px;
+      }
+      .countdown-value {
+        display: block;
+        font-size: 1.5em;
+        font-weight: bold;
+        color: var(--motogp-red);
+        line-height: 1.2;
+      }
+      .countdown-label {
+        font-size: 0.8em;
+        color: #6c757d;
+        margin-top: 4px;
+      }
+      .countdown-complete {
+        color: #6c757d;
+        font-weight: bold;
+        font-size: 1.1em;
+      }
+      .section-title {
+        position: relative;
+        margin-bottom: 30px;
+        padding-bottom: 10px;
+      }
+      .section-title::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 60px;
+        height: 3px;
+        background-color: var(--motogp-red);
+      }
     </style>
-</head>
-<body>
-
-<nav class="navbar navbar-expand-sm bg-light navbar-light fixed-top">
-    <div class="container">
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-sm bg-light navbar-light fixed-top">
+      <div class="container">
         <a class="navbar-brand" href="index.html">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/MotoGP_logo_%282024%29.svg/1200px-MotoGP_logo_%282024%29.svg.png" alt="MotoGP Logo" style="height:48px;">
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/MotoGP_logo_%282024%29.svg/1200px-MotoGP_logo_%282024%29.svg.png"
+            alt="MotoGP Logo"
+            style="height: 48px"
+          />
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarNav"
+        >
+          <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav">
-                <li class="nav-item">
-                    <a class="nav-link active" href="calendar.html">CALENDAR</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="riders-teams.html">RIDERS & TEAMS</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="results-standings.html">RESULTS & STANDINGS</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="login.html">LOGIN</a>
-                </li>
-            </ul>
+          <ul class="navbar-nav">
+            <li class="nav-item">
+              <a class="nav-link active" href="calendar.html">CALENDAR</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="riders-teams.html">RIDERS & TEAMS</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="results-standings.html"
+                >RESULTS & STANDINGS</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="login.html">LOGIN</a>
+            </li>
+          </ul>
         </div>
-    </div>
-</nav>
+      </div>
+    </nav>
 
-<div class="page-header">
-    <div class="container">
+    <div class="page-header">
+      <div class="container">
         <h1>2025 Race Calendar</h1>
-        <p class="lead">Follow the MotoGP™ World Championship around the globe</p>
+        <p class="lead">
+          Follow the MotoGP™ World Championship around the globe
+        </p>
+      </div>
     </div>
-</div>
 
-<div class="container">
-    <!-- Filter Section -->
-    <div class="filter-section">
+    <div class="container">
+      <!-- Filter Section -->
+      <div class="filter-section">
         <div class="row">
-            <div class="col-md-4">
-                <select class="form-select" id="monthFilter">
-                    <option value="">All Months</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <select class="form-select" id="countryFilter">
-                    <option value="">All Countries</option>
-                </select>
-            </div>
-            <div class="col-md-4">
-                <select class="form-select" id="statusFilter">
-                    <option value="">All Status</option>
-                    <option value="upcoming">Upcoming</option>
-                    <option value="completed">Completed</option>
-                </select>
-            </div>
+          <div class="col-md-4">
+            <select class="form-select" id="monthFilter">
+              <option value="">All Months</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <select class="form-select" id="countryFilter">
+              <option value="">All Countries</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <select class="form-select" id="statusFilter">
+              <option value="">All Status</option>
+              <option value="upcoming">Upcoming</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
         </div>
-    </div>
+      </div>
 
-    <!-- Calendar Grid -->
-    <div class="row" id="calendarGrid">
+      <!-- Calendar Grid -->
+      <div class="row" id="calendarGrid">
         <!-- Calendar cards will be loaded here -->
+      </div>
     </div>
-</div>
 
-<footer class="bg-dark text-white mt-5">
-    <div class="container py-4">
-        <div class="row">
-            <div class="col-md-6">
-                <h5>About MotoGP™</h5>
-                <p>MotoGP™ is the premier motorcycle racing world championship; an eighteen-race series visiting fourteen countries, four continents and with pan-global television coverage.</p>
-            </div>
-            <div class="col-md-3">
-                <h5>Quick Links</h5>
-                <ul class="list-unstyled">
-                    <li><a href="calendar.html" class="text-white">Calendar</a></li>
-                    <li><a href="riders-teams.html" class="text-white">Riders & Teams</a></li>
-                    <li><a href="results-standings.html" class="text-white">Results & Standings</a></li>
-                </ul>
-            </div>
-            <div class="col-md-3">
-                <h5>Follow Us</h5>
-                <div class="d-flex gap-3">
-                    <a href="#" class="text-white"><i class="bi bi-facebook"></i></a>
-                    <a href="#" class="text-white"><i class="bi bi-twitter"></i></a>
-                    <a href="#" class="text-white"><i class="bi bi-instagram"></i></a>
-                    <a href="#" class="text-white"><i class="bi bi-youtube"></i></a>
-                </div>
-            </div>
+    <section class="newsletter">
+      <h2>GET THE OFFICIAL MOTOGP™ NEWSLETTER!</h2>
+      <p>
+        Create a MotoGP™ account now and gain access to exclusive content, such
+        as the MotoGP™ Newsletter, which features GP Reports, incredible videos
+        and other interesting information about our sport.
+      </p>
+      <a href="#" class="btn-signup">SIGN UP FOR FREE</a>
+    </section>
+
+    <footer>
+      <img class="logo" src="/images/footer1.png" alt="" class="motogp" />
+      <p>Official Sponsors</p>
+      <div class="logong">
+        <ul>
+          <li>
+            <a href=""><img src="/images/footer2.png" alt="" /></a>
+          </li>
+          <li>
+            <a href=""><img src="/images/footer3.png" alt="" /></a>
+          </li>
+          <li>
+            <a href=""><img src="/images/footer4.png" alt="" /></a>
+          </li>
+          <li>
+            <a href=""><img src="/images/footer5.png" alt="" /></a>
+          </li>
+          <li>
+            <a href=""><img src="/images/footer6.png" alt="" /></a>
+          </li>
+          <li>
+            <a href=""><img src="/images/footer7.png" alt="" /></a>
+          </li>
+        </ul>
+      </div>
+      <div class="container">
+        <ul class="media">
+          <li><a href="" class="ma">Media & Commercial</a></li>
+          <li><a href="">Official Sponsors</a></li>
+          <li><a href="">TV Broadcast</a></li>
+          <li><a href="">MotoGP™ Apps</a></li>
+        </ul>
+        <ul class="media">
+          <li><a href="" class="ma">Media & Commercial</a></li>
+          <li><a href="">Official Sponsors</a></li>
+          <li><a href="">TV Broadcast</a></li>
+          <li><a href="">MotoGP™ Apps</a></li>
+        </ul>
+        <ul class="media">
+          <li><a href="" class="ma">Media & Commercial</a></li>
+          <li><a href="">Official Sponsors</a></li>
+          <li><a href="">TV Broadcast</a></li>
+          <li><a href="">MotoGP™ Apps</a></li>
+        </ul>
+        <ul class="media">
+          <li><a href="" class="ma">Media & Commercial</a></li>
+          <li><a href="">Official Sponsors</a></li>
+          <li><a href="">TV Broadcast</a></li>
+          <li><a href="">MotoGP™ Apps</a></li>
+        </ul>
+        <ul class="media">
+          <li><a href="" class="ma">Media & Commercial</a></li>
+          <li><a href="">Official Sponsors</a></li>
+          <li><a href="">TV Broadcast</a></li>
+          <li><a href="">MotoGP™ Apps</a></li>
+        </ul>
+      </div>
+      <div class="contact">
+        <div class="app-section">
+          <p>Download the Official<br /><strong>MotoGP™ App</strong></p>
+          <div class="app-links">
+            <a href="#"><img src="/images/f1.webp" alt="App Store" /></a>
+            <a href="#"><img src="/images/f2.webp" alt="Google Play" /></a>
+          </div>
         </div>
-    </div>
-</footer>
 
-<script src="bootstrap.bundle.min.js"></script>
-<script>
-// Load Calendar Data
-fetch('/api/calendar')
-    .then(response => response.json())
-    .then(races => {
-        // Sort races by date
-        races.sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+        <div class="social-icons">
+          <a href="#"
+            ><img src="/images/icons/facebook.svg" alt="Facebook"
+          /></a>
+          <a href="#"
+            ><img src="/images/icons/instagram.svg" alt="Instagram"
+          /></a>
+          <a href="#"><img src="/images/icons/threads.svg" alt="Threads" /></a>
+          <a href="#"><img src="/images/icons/x.svg" alt="X" /></a>
+          <a href="#"><img src="/images/icons/tiktok.svg" alt="TikTok" /></a>
+          <a href="#"><img src="/images/icons/youtube.svg" alt="YouTube" /></a>
+          <a href="#"
+            ><img src="/images/icons/linkedin.svg" alt="LinkedIn"
+          /></a>
+          <a href="#"><img src="/images/icons/podcast.svg" alt="Podcast" /></a>
+          <a href="#"
+            ><img src="/images/icons/snapchat.svg" alt="Snapchat"
+          /></a>
+          <a href="#"><img src="/images/icons/twitch.svg" alt="Twitch" /></a>
+          <a href="#"><img src="/images/icons/spotify.svg" alt="Spotify" /></a>
+          <a href="#"
+            ><img src="/images/icons/whatsapp.svg" alt="WhatsApp"
+          /></a>
+          <a href="#"
+            ><img src="/images/icons/telegram.svg" alt="Telegram"
+          /></a>
+        </div>
+      </div>
+      <div class="border-black"></div>
+      <div class="end">
+        <p>
+          © 2025 Dorna Sports SL. All rights reserved. All trademarks are the
+          property of their respective owners.
+        </p>
+      </div>
+    </footer>
 
-        // Populate filters
-        const months = [...new Set(races.map(race => 
-            new Date(race.start_date).toLocaleString('default', { month: 'long' })))];
-        const countries = [...new Set(races.map(race => race.country))];
+    <script src="bootstrap.bundle.min.js"></script>
+    <script>
+      // Load Calendar Data
+      fetch("/api/calendar")
+        .then((response) => response.json())
+        .then((races) => {
+          // Sort races by date
+          races.sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
 
-        const monthFilter = document.getElementById('monthFilter');
-        const countryFilter = document.getElementById('countryFilter');
+          // Populate filters
+          const months = [
+            ...new Set(
+              races.map((race) =>
+                new Date(race.start_date).toLocaleString("default", {
+                  month: "long",
+                })
+              )
+            ),
+          ];
+          const countries = [...new Set(races.map((race) => race.country))];
 
-        monthFilter.innerHTML = '<option value="">All Months</option>';
-        months.forEach(month => {
+          const monthFilter = document.getElementById("monthFilter");
+          const countryFilter = document.getElementById("countryFilter");
+
+          monthFilter.innerHTML = '<option value="">All Months</option>';
+          months.forEach((month) => {
             monthFilter.innerHTML += `<option value="${month}">${month}</option>`;
-        });
+          });
 
-        countryFilter.innerHTML = '<option value="">All Countries</option>';
-        countries.forEach(country => {
+          countryFilter.innerHTML = '<option value="">All Countries</option>';
+          countries.forEach((country) => {
             countryFilter.innerHTML += `<option value="${country}">${country}</option>`;
-        });
+          });
 
-        // Display races
-        function displayRaces(filteredRaces = races) {
-            const grid = document.getElementById('calendarGrid');
-            grid.innerHTML = '';
+          // Display races
+          function displayRaces(filteredRaces = races) {
+            const grid = document.getElementById("calendarGrid");
+            grid.innerHTML = "";
 
-            let currentMonth = '';
+            let currentMonth = "";
             let foundNextRace = false;
             const today = new Date();
 
-            filteredRaces.forEach(race => {
-                const startDate = new Date(race.start_date);
-                const endDate = new Date(race.end_date);
-                const month = startDate.toLocaleString('default', { month: 'long' });
-                
-                let status;
-                if (endDate < today) {
-                    status = 'completed';
-                } else {
-                    status = 'upcoming';
-                }
+            filteredRaces.forEach((race) => {
+              const startDate = new Date(race.start_date);
+              const endDate = new Date(race.end_date);
+              const month = startDate.toLocaleString("default", {
+                month: "long",
+              });
 
-                // Add month divider if new month
-                if (month !== currentMonth) {
-                    currentMonth = month;
-                    grid.innerHTML += `
+              let status;
+              if (endDate < today) {
+                status = "completed";
+              } else {
+                status = "upcoming";
+              }
+
+              // Add month divider if new month
+              if (month !== currentMonth) {
+                currentMonth = month;
+                grid.innerHTML += `
                         <div class="col-12">
                             <h3 class="month-divider">${month}</h3>
                         </div>
                     `;
-                }
+              }
 
-                // Format dates
-                const options = { weekday: 'long', month: 'short', day: 'numeric' };
-                const formattedStartDate = startDate.toLocaleDateString('en-US', options);
-                const formattedEndDate = endDate.toLocaleDateString('en-US', options);
+              // Format dates
+              const options = {
+                weekday: "long",
+                month: "short",
+                day: "numeric",
+              };
+              const formattedStartDate = startDate.toLocaleDateString(
+                "en-US",
+                options
+              );
+              const formattedEndDate = endDate.toLocaleDateString(
+                "en-US",
+                options
+              );
 
-                grid.innerHTML += `
-                    <div class="col-md-6 col-lg-4 race-card" data-month="${month}" data-country="${race.country}" data-status="${status}">
+              grid.innerHTML += `
+                    <div class="col-md-6 col-lg-4 race-card" data-month="${month}" data-country="${
+                race.country
+              }" data-status="${status}">
                         <div class="card calendar-card">
                             <div class="card-header">
                                 <div class="race-name">${race.race_name}</div>
@@ -367,32 +488,39 @@ fetch('/api/calendar')
                                     <div class="info-item">
                                         <i class="bi bi-geo-alt"></i>
                                         <div class="country-info">
-                                            <img src="/images/imgs/flags/${race.country.toLowerCase()
-                                                .replace('united kingdom', 'gb')
-                                                .replace('united states', 'us')
-                                                .replace('usa', 'us')
-                                                .replace('qatar', 'qat')
-                                                .replace('germany', 'de')
-                                                .replace('netherlands', 'nl')
-                                                .replace('czechia', 'czech')
-                                                .replace('austria', 'au')
-                                                .replace('hungary', 'hu')
-                                                .replace('catalonia', 'cat')
-                                                .replace('san marino', 'sm')
-                                                .replace('indonesia', 'id')
-                                                .replace('malaysia', 'mal')
-                                                .replace('valencia', 'val')
-                                                .replace('spain', 'es')
-                                                .replace('france', 'fr')
-                                                .replace('italy', 'it')
-                                                .replace('switzerland', 'ch')
-                                                .replace('argentina', 'arg')
-                                                .replace('thailand', 'thailand')
-                                                .replace('portugal', 'portugal')
-                                                .replace('japan', 'japan')
-                                                .replace('south africa', 'south africa')
-                                                .replace('australia', 'australia')
-                                                .replace('aragon', 'aragon')}.svg" 
+                                            <img src="/images/imgs/flags/${race.country
+                                              .toLowerCase()
+                                              .replace("united kingdom", "gb")
+                                              .replace("united states", "us")
+                                              .replace("usa", "us")
+                                              .replace("qatar", "qat")
+                                              .replace("germany", "de")
+                                              .replace("netherlands", "nl")
+                                              .replace("czechia", "czech")
+                                              .replace("austria", "au")
+                                              .replace("hungary", "hu")
+                                              .replace("catalonia", "cat")
+                                              .replace("san marino", "sm")
+                                              .replace("indonesia", "id")
+                                              .replace("malaysia", "mal")
+                                              .replace("valencia", "val")
+                                              .replace("spain", "es")
+                                              .replace("france", "fr")
+                                              .replace("italy", "it")
+                                              .replace("switzerland", "ch")
+                                              .replace("argentina", "arg")
+                                              .replace("thailand", "thailand")
+                                              .replace("portugal", "portugal")
+                                              .replace("japan", "japan")
+                                              .replace(
+                                                "south africa",
+                                                "south africa"
+                                              )
+                                              .replace("australia", "australia")
+                                              .replace(
+                                                "aragon",
+                                                "aragon"
+                                              )}.svg" 
                                                 class="country-flag"
                                                 alt="${race.country} flag"
                                                 onerror="this.onerror=null; this.src='/images/imgs/flags/es.svg';">
@@ -411,7 +539,9 @@ fetch('/api/calendar')
                                         </div>
                                     </div>
                                 </div>
-                                <div class="countdown" id="countdown-${race.calendar_id}">
+                                <div class="countdown" id="countdown-${
+                                  race.calendar_id
+                                }">
                                     ${calculateCountdown(startDate)}
                                 </div>
                             </div>
@@ -419,19 +549,21 @@ fetch('/api/calendar')
                     </div>
                 `;
             });
-        }
+          }
 
-        // Helper function to calculate countdown
-        function calculateCountdown(raceDate) {
+          // Helper function to calculate countdown
+          function calculateCountdown(raceDate) {
             const now = new Date();
             const timeLeft = raceDate - now;
 
             if (timeLeft < 0) {
-                return '<div class="countdown-complete">Race Completed</div>';
+              return '<div class="countdown-complete">Race Completed</div>';
             }
 
             const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const hours = Math.floor(
+              (timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+            );
 
             return `
                 <div class="countdown-timer">
@@ -445,47 +577,59 @@ fetch('/api/calendar')
                     </div>
                 </div>
             `;
-        }
+          }
 
-        // Filter handlers
-        function filterRaces() {
+          // Filter handlers
+          function filterRaces() {
             const selectedMonth = monthFilter.value;
             const selectedCountry = countryFilter.value;
-            const selectedStatus = document.getElementById('statusFilter').value;
+            const selectedStatus =
+              document.getElementById("statusFilter").value;
 
-            const filteredRaces = races.filter(race => {
-                const month = new Date(race.start_date).toLocaleString('default', { month: 'long' });
-                const today = new Date();
-                const status = new Date(race.end_date) < today ? 'completed' : 'upcoming';
+            const filteredRaces = races.filter((race) => {
+              const month = new Date(race.start_date).toLocaleString(
+                "default",
+                { month: "long" }
+              );
+              const today = new Date();
+              const status =
+                new Date(race.end_date) < today ? "completed" : "upcoming";
 
-                return (!selectedMonth || month === selectedMonth) &&
-                       (!selectedCountry || race.country === selectedCountry) &&
-                       (!selectedStatus || status === selectedStatus);
+              return (
+                (!selectedMonth || month === selectedMonth) &&
+                (!selectedCountry || race.country === selectedCountry) &&
+                (!selectedStatus || status === selectedStatus)
+              );
             });
 
             displayRaces(filteredRaces);
-        }
+          }
 
-        monthFilter.addEventListener('change', filterRaces);
-        countryFilter.addEventListener('change', filterRaces);
-        document.getElementById('statusFilter').addEventListener('change', filterRaces);
+          monthFilter.addEventListener("change", filterRaces);
+          countryFilter.addEventListener("change", filterRaces);
+          document
+            .getElementById("statusFilter")
+            .addEventListener("change", filterRaces);
 
-        // Initial display
-        displayRaces();
+          // Initial display
+          displayRaces();
 
-        // Update countdowns every minute
-        setInterval(() => {
+          // Update countdowns every minute
+          setInterval(() => {
             const countdowns = document.querySelectorAll('[id^="countdown-"]');
-            countdowns.forEach(countdown => {
-                const raceId = countdown.id.split('-')[1];
-                const race = races.find(r => r.calendar_id === parseInt(raceId));
-                if (race) {
-                    countdown.innerHTML = calculateCountdown(new Date(race.start_date));
-                }
+            countdowns.forEach((countdown) => {
+              const raceId = countdown.id.split("-")[1];
+              const race = races.find(
+                (r) => r.calendar_id === parseInt(raceId)
+              );
+              if (race) {
+                countdown.innerHTML = calculateCountdown(
+                  new Date(race.start_date)
+                );
+              }
             });
-        }, 60000);
-    });
-</script>
-
-</body>
-</html> 
+          }, 60000);
+        });
+    </script>
+  </body>
+</html>
