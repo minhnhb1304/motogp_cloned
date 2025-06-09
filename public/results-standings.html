@@ -636,21 +636,28 @@
         fetch(`/api/results?race=${raceId}`)
           .then((response) => response.json())
           .then((data) => {
-            if (data.race_status !== "finished") {
+            if (data.race_status === 'ongoing' || data.race_status === 'upcoming') {
               // Show message for upcoming or ongoing races
               const raceMessage = document.getElementById("raceMessage");
-              raceMessage.querySelector(".race-name").textContent =
-                data.race_name;
-              raceMessage.querySelector(".race-message").textContent =
-                data.message;
+              raceMessage.querySelector(".race-name").textContent = data.race_name;
+              raceMessage.querySelector(".race-message").textContent = data.message;
 
               // Format dates
               const startDate = new Date(data.start_date).toLocaleDateString();
               const endDate = new Date(data.end_date).toLocaleDateString();
-              raceMessage.querySelector(
-                ".race-dates"
-              ).textContent = `Race dates: ${startDate} - ${endDate}`;
+              raceMessage.querySelector(".race-dates").textContent = 
+                `Race dates: ${startDate} - ${endDate}`;
 
+              raceMessage.style.display = "block";
+              return;
+            }
+
+            if (data.race_status === 'finished' && (!data.results || data.results.length === 0)) {
+              const raceMessage = document.getElementById("raceMessage");
+              raceMessage.querySelector(".race-name").textContent = "No Results";
+              raceMessage.querySelector(".race-message").textContent = 
+                "No results available for this race yet.";
+              raceMessage.querySelector(".race-dates").textContent = "";
               raceMessage.style.display = "block";
               return;
             }
@@ -659,6 +666,7 @@
             document.getElementById("raceResults").style.display = "block";
 
             const results = data.results;
+            
             // Update Podium
             const podium = document.getElementById("podiumDisplay");
             podium.innerHTML = "";
@@ -671,11 +679,7 @@
                     <div class="podium-position ${positions[index]}">
                         <div class="podium-block">
                             <div class="rider-image">
-                                <img src="${
-                                  result.rider_image
-                                    ? `/images/rider/${result.rider_image}`
-                                    : "/images/rider/default-rider.webp"
-                                }" 
+                                <img src="${result.rider_image ? `/images/rider/${result.rider_image}` : "/images/rider/default-rider.webp"}" 
                                      alt="${result.rider_name}"
                                      onerror="this.onerror=null; this.src='/images/rider/default-rider.webp';">
                             </div>
@@ -683,9 +687,7 @@
                             <small>${result.team_name}</small>
                             <div class="race-time">${result.race_time}</div>
                         </div>
-                        <div class="position-number">${
-                          index === 1 ? "1st" : index === 0 ? "2nd" : "3rd"
-                        }</div>
+                        <div class="position-number">${index === 1 ? "1st" : index === 0 ? "2nd" : "3rd"}</div>
                     </div>
                 `;
             });
@@ -695,22 +697,14 @@
             tbody.innerHTML = "";
             results.forEach((result) => {
               tbody.innerHTML += `
-                    <tr class="${
-                      result.position <= 3
-                        ? "podium-position-" + result.position
-                        : ""
-                    }">
+                    <tr class="${result.position <= 3 ? "podium-position-" + result.position : ""}">
                         <td class="position-cell">
-                            <span class="position-badge">${
-                              result.position
-                            }</span>
+                            <span class="position-badge">${result.position}</span>
                         </td>
                         <td>
                             <div class="rider-info">
                                 <strong>${result.rider_name}</strong>
-                                <small class="text-muted d-block">${
-                                  result.team_name
-                                }</small>
+                                <small class="text-muted d-block">${result.team_name}</small>
                             </div>
                         </td>
                         <td>${result.team_name}</td>

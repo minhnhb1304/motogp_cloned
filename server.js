@@ -219,13 +219,52 @@ app.put('/api/riders/:id', requireAuth, (req, res) => {
 
 // Delete rider
 app.delete('/api/riders/:id', requireAuth, (req, res) => {
-    const sql = 'DELETE FROM riders WHERE rider_id = ?';
-    pool.query(sql, [req.params.id], (err) => {
+    const rider_id = req.params.id;
+
+    // Start a transaction
+    pool.getConnection((err, connection) => {
         if (err) {
-            console.error('Error deleting rider:', err);
+            console.error('Error getting connection:', err);
             return res.status(500).json({ error: 'Internal server error' });
         }
-        res.json({ success: true, message: 'Rider deleted successfully' });
+
+        connection.beginTransaction(async (err) => {
+            if (err) {
+                connection.release();
+                console.error('Error starting transaction:', err);
+                return res.status(500).json({ error: 'Internal server error' });
+            }
+
+            try {
+                // First delete any results associated with this rider
+                await connection.promise().query(
+                    'DELETE FROM results WHERE rider_id = ?',
+                    [rider_id]
+                );
+
+                // Then delete the rider
+                await connection.promise().query(
+                    'DELETE FROM riders WHERE rider_id = ?',
+                    [rider_id]
+                );
+
+                // Commit the transaction
+                await connection.promise().commit();
+
+                res.json({ 
+                    success: true, 
+                    message: 'Rider and associated results deleted successfully' 
+                });
+
+            } catch (error) {
+                // Rollback on error
+                await connection.promise().rollback();
+                console.error('Error in rider deletion transaction:', error);
+                res.status(500).json({ error: 'Failed to delete rider' });
+            } finally {
+                connection.release();
+            }
+        });
     });
 });
 
@@ -250,42 +289,149 @@ app.get('/api/teams', (req, res) => {
             return res.status(500).json({ error: 'Internal server error' });
         }
 
-        // Send results directly without modifying paths
+        // Process results to add complete image URLs
+        results = results.map(team => ({
+            ...team,
+            team_picture: team.team_picture,
+            rider1_image: team.rider1_image ? `/images/rider/${team.rider1_image}` : null,
+            rider2_image: team.rider2_image ? `/images/rider/${team.rider2_image}` : null
+        }));
+
         res.json(results);
     });
 });
 
-// Results for a specific race
-app.get('/api/results', (req, res) => {
+// Get specific team
+app.get('/api/teams/:id', requireAuth, (req, res) => {
     const sql = `
+        SELECT 
+            t.*,
+            r1.name as rider1_name, 
+            r1.country as rider1_nationality,
+            r2.name as rider2_name, 
+            r2.country as rider2_nationality
+        FROM teams t
+        LEFT JOIN riders r1 ON t.rider1_id = r1.rider_id
+        LEFT JOIN riders r2 ON t.rider2_id = r2.rider_id
+        WHERE t.team_id = ?`;
+    
+    pool.query(sql, [req.params.id], (err, results) => {
+        if (err) {
+            console.error('Error fetching team:', err);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+        if (results.length === 0) {
+            return res.status(404).json({ error: 'Team not found' });
+        }
+        res.json(results[0]);
+    });
+});
+
+// Results for a specific race or all races
+app.get('/api/results', (req, res) => {
+    const calendar_id = req.query.race;
+    
+    let sql = `
         SELECT 
             r.*,
             c.race_name, 
             c.country as race_country,
+            c.start_date,
+            c.end_date,
             rd.name as rider_name, 
             rd.country as rider_country,
-            t.team_name
+            rd.image_url as rider_image,
+            t.team_name,
+            t.team_picture
         FROM results r 
         JOIN calendar c ON r.calendar_id = c.calendar_id 
         JOIN riders rd ON r.rider_id = rd.rider_id
-        JOIN teams t ON r.team_id = t.team_id
-        ORDER BY c.start_date DESC, r.position ASC`;
+        JOIN teams t ON r.team_id = t.team_id`;
+
+    const params = [];
     
-    pool.query(sql, (err, results) => {
+    // If specific race is requested
+    if (calendar_id) {
+        sql += ' WHERE r.calendar_id = ?';
+        params.push(calendar_id);
+    }
+    
+    sql += ' ORDER BY c.start_date DESC, r.position ASC';
+    
+    pool.query(sql, params, (err, results) => {
         if (err) {
             console.error('Error fetching results:', err);
             return res.status(500).json({ error: 'Internal server error' });
         }
         
-        // Process results to ensure all fields are present
-        results = results.map(result => ({
-            ...result,
-            position: result.position || 'Not set',
-            points: result.points || 0,
-            race_time: result.race_time || 'DNF'
-        }));
-        
-        res.json(results);
+        // If specific race was requested
+        if (calendar_id) {
+            // If no results found, check if race exists
+            if (results.length === 0) {
+                const checkRaceSql = 'SELECT * FROM calendar WHERE calendar_id = ?';
+                pool.query(checkRaceSql, [calendar_id], (err, raceResults) => {
+                    if (err) {
+                        console.error('Error checking race:', err);
+                        return res.status(500).json({ error: 'Internal server error' });
+                    }
+                    
+                    if (raceResults.length === 0) {
+                        return res.status(404).json({ error: 'Race not found' });
+                    }
+                    
+                    const race = raceResults[0];
+                    const now = new Date();
+                    const startDate = new Date(race.start_date);
+                    const endDate = new Date(race.end_date);
+                    
+                    if (endDate < now) {
+                        return res.json({
+                            race_status: 'finished',
+                            results: []
+                        });
+                    } else if (startDate <= now && endDate >= now) {
+                        return res.json({
+                            race_status: 'ongoing',
+                            race_name: race.race_name,
+                            start_date: race.start_date,
+                            end_date: race.end_date,
+                            message: 'Race is currently in progress'
+                        });
+                    } else {
+                        return res.json({
+                            race_status: 'upcoming',
+                            race_name: race.race_name,
+                            start_date: race.start_date,
+                            end_date: race.end_date,
+                            message: 'Race has not started yet'
+                        });
+                    }
+                });
+                return;
+            }
+            
+            // Process results for specific race
+            const processedResults = results.map(result => ({
+                ...result,
+                position: result.position || 'Not set',
+                points: result.points || 0,
+                race_time: result.race_time || 'DNF',
+                rider_image: result.rider_image
+            }));
+            
+            res.json({
+                race_status: 'finished',
+                results: processedResults
+            });
+        } else {
+            // Return all results for admin view
+            res.json(results.map(result => ({
+                ...result,
+                position: result.position || 'Not set',
+                points: result.points || 0,
+                race_time: result.race_time || 'DNF'
+            })));
+        }
     });
 });
 
@@ -460,6 +606,53 @@ app.get('/api/calendar', (req, res) => {
     });
 });
 
+// Get specific race
+app.get('/api/calendar/:id', requireAuth, (req, res) => {
+    const sql = `
+        SELECT 
+            c.*,
+            (SELECT COUNT(*) FROM results WHERE calendar_id = c.calendar_id) as has_results,
+            (SELECT 
+                JSON_OBJECT(
+                    'name', rd.name,
+                    'team', t.team_name,
+                    'time', r.race_time
+                )
+             FROM results r
+             JOIN riders rd ON r.rider_id = rd.rider_id
+             JOIN teams t ON r.team_id = t.team_id
+             WHERE r.calendar_id = c.calendar_id
+             AND r.position = 1
+             LIMIT 1) as winner
+        FROM calendar c 
+        WHERE c.calendar_id = ?`;
+
+    pool.query(sql, [req.params.id], (err, results) => {
+        if (err) {
+            console.error('Error fetching race:', err);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+        if (results.length === 0) {
+            return res.status(404).json({ error: 'Race not found' });
+        }
+        
+        const race = results[0];
+        const now = new Date();
+        const startDate = new Date(race.start_date);
+        const endDate = new Date(race.end_date);
+        
+        if (endDate < now) {
+            race.status = 'Completed';
+        } else if (startDate <= now && endDate >= now) {
+            race.status = 'In Progress';
+        } else {
+            race.status = 'Upcoming';
+        }
+        
+        res.json(race);
+    });
+});
+
 // Rider Championship Standings
 app.get('/api/standings/riders', (req, res) => {
     const sql = `
@@ -594,6 +787,307 @@ app.post('/api/teams', requireAuth, async (req, res) => {
                 await connection.promise().rollback();
                 console.error('Error in team creation transaction:', error);
                 res.status(500).json({ error: 'Failed to create team' });
+            } finally {
+                connection.release();
+            }
+        });
+    });
+});
+
+// Delete team endpoint
+app.delete('/api/teams/:id', requireAuth, (req, res) => {
+    const team_id = req.params.id;
+
+    // Start a transaction
+    pool.getConnection((err, connection) => {
+        if (err) {
+            console.error('Error getting connection:', err);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+
+        connection.beginTransaction(async (err) => {
+            if (err) {
+                connection.release();
+                console.error('Error starting transaction:', err);
+                return res.status(500).json({ error: 'Internal server error' });
+            }
+
+            try {
+                // First, set team_id to NULL for any riders in this team
+                await connection.promise().query(
+                    'UPDATE riders SET team_id = NULL WHERE team_id = ?',
+                    [team_id]
+                );
+
+                // Then delete the team
+                await connection.promise().query(
+                    'DELETE FROM teams WHERE team_id = ?',
+                    [team_id]
+                );
+
+                // Commit the transaction
+                await connection.promise().commit();
+
+                res.json({ 
+                    success: true, 
+                    message: 'Team deleted successfully' 
+                });
+
+            } catch (error) {
+                // Rollback on error
+                await connection.promise().rollback();
+                console.error('Error in team deletion transaction:', error);
+                res.status(500).json({ error: 'Failed to delete team' });
+            } finally {
+                connection.release();
+            }
+        });
+    });
+});
+
+// Update team endpoint
+app.put('/api/teams/:id', requireAuth, async (req, res) => {
+    const team_id = req.params.id;
+    const { team_name, team_picture, rider1_id, rider2_id } = req.body;
+
+    // Validate required fields
+    if (!team_name) {
+        return res.status(400).json({ error: 'Team name is required' });
+    }
+
+    // Start a transaction
+    pool.getConnection((err, connection) => {
+        if (err) {
+            console.error('Error getting connection:', err);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+
+        connection.beginTransaction(async (err) => {
+            if (err) {
+                connection.release();
+                console.error('Error starting transaction:', err);
+                return res.status(500).json({ error: 'Internal server error' });
+            }
+
+            try {
+                // First, reset team_id for any riders that were previously in this team
+                await connection.promise().query(
+                    'UPDATE riders SET team_id = NULL WHERE team_id = ?',
+                    [team_id]
+                );
+
+                // Update the team details
+                const updateFields = ['team_name = ?'];
+                const updateValues = [team_name];
+
+                // Add team_picture to update if provided
+                if (team_picture) {
+                    updateFields.push('team_picture = ?');
+                    updateValues.push(team_picture);
+                }
+
+                // Add rider IDs to update
+                updateFields.push('rider1_id = ?', 'rider2_id = ?');
+                updateValues.push(rider1_id, rider2_id);
+
+                // Add team_id to values array
+                updateValues.push(team_id);
+
+                await connection.promise().query(
+                    `UPDATE teams SET ${updateFields.join(', ')} WHERE team_id = ?`,
+                    updateValues
+                );
+
+                // Update team_id for the selected riders
+                if (rider1_id) {
+                    await connection.promise().query(
+                        'UPDATE riders SET team_id = ? WHERE rider_id = ?',
+                        [team_id, rider1_id]
+                    );
+                }
+                if (rider2_id) {
+                    await connection.promise().query(
+                        'UPDATE riders SET team_id = ? WHERE rider_id = ?',
+                        [team_id, rider2_id]
+                    );
+                }
+
+                // Commit the transaction
+                await connection.promise().commit();
+
+                res.json({ 
+                    success: true, 
+                    message: 'Team updated successfully' 
+                });
+
+            } catch (error) {
+                // Rollback on error
+                await connection.promise().rollback();
+                console.error('Error in team update transaction:', error);
+                res.status(500).json({ error: 'Failed to update team' });
+            } finally {
+                connection.release();
+            }
+        });
+    });
+});
+
+// Add new race to calendar
+app.post('/api/calendar', requireAuth, (req, res) => {
+    const { race_name, country, start_date, end_date } = req.body;
+
+    // Validate required fields
+    if (!race_name || !country || !start_date || !end_date) {
+        return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    // Validate dates
+    const startDate = new Date(start_date);
+    const endDate = new Date(end_date);
+    
+    if (endDate < startDate) {
+        return res.status(400).json({ error: 'End date cannot be before start date' });
+    }
+
+    const sql = 'INSERT INTO calendar (race_name, country, start_date, end_date) VALUES (?, ?, ?, ?)';
+    pool.query(sql, [race_name, country, start_date, end_date], (err, result) => {
+        if (err) {
+            console.error('Error adding race:', err);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+        res.json({ 
+            success: true, 
+            calendar_id: result.insertId,
+            message: 'Race added successfully' 
+        });
+    });
+});
+
+// Delete a race from calendar
+app.delete('/api/calendar/:id', requireAuth, (req, res) => {
+    const calendar_id = req.params.id;
+
+    // Start a transaction
+    pool.getConnection((err, connection) => {
+        if (err) {
+            console.error('Error getting connection:', err);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+
+        connection.beginTransaction(async (err) => {
+            if (err) {
+                connection.release();
+                console.error('Error starting transaction:', err);
+                return res.status(500).json({ error: 'Internal server error' });
+            }
+
+            try {
+                // First delete any results associated with this race
+                await connection.promise().query(
+                    'DELETE FROM results WHERE calendar_id = ?',
+                    [calendar_id]
+                );
+
+                // Then delete the race from calendar
+                await connection.promise().query(
+                    'DELETE FROM calendar WHERE calendar_id = ?',
+                    [calendar_id]
+                );
+
+                // Commit the transaction
+                await connection.promise().commit();
+
+                res.json({ 
+                    success: true, 
+                    message: 'Race and associated results deleted successfully' 
+                });
+
+            } catch (error) {
+                // Rollback on error
+                await connection.promise().rollback();
+                console.error('Error in race deletion transaction:', error);
+                res.status(500).json({ error: 'Failed to delete race' });
+            } finally {
+                connection.release();
+            }
+        });
+    });
+});
+
+// Update race in calendar
+app.put('/api/calendar/:id', requireAuth, (req, res) => {
+    const calendar_id = req.params.id;
+    const { race_name, country, start_date, end_date } = req.body;
+
+    // Validate required fields
+    if (!race_name || !country || !start_date || !end_date) {
+        return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    // Validate dates
+    const startDate = new Date(start_date);
+    const endDate = new Date(end_date);
+    
+    if (endDate < startDate) {
+        return res.status(400).json({ error: 'End date cannot be before start date' });
+    }
+
+    // Check for date conflicts with other races
+    const checkConflictsSql = `
+        SELECT calendar_id, race_name 
+        FROM calendar 
+        WHERE calendar_id != ? 
+        AND (
+            (start_date <= ? AND end_date >= ?) OR
+            (start_date <= ? AND end_date >= ?) OR
+            (start_date >= ? AND end_date <= ?)
+        )`;
+
+    pool.getConnection((err, connection) => {
+        if (err) {
+            console.error('Error getting connection:', err);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+
+        connection.beginTransaction(async (err) => {
+            if (err) {
+                connection.release();
+                console.error('Error starting transaction:', err);
+                return res.status(500).json({ error: 'Internal server error' });
+            }
+
+            try {
+                // Check for date conflicts
+                const [conflicts] = await connection.promise().query(
+                    checkConflictsSql,
+                    [calendar_id, start_date, start_date, end_date, end_date, start_date, end_date]
+                );
+
+                if (conflicts.length > 0) {
+                    throw new Error(`Date conflict with race: ${conflicts[0].race_name}`);
+                }
+
+                // Update the calendar entry
+                await connection.promise().query(
+                    'UPDATE calendar SET race_name = ?, country = ?, start_date = ?, end_date = ? WHERE calendar_id = ?',
+                    [race_name, country, start_date, end_date, calendar_id]
+                );
+
+                // Commit the transaction
+                await connection.promise().commit();
+
+                res.json({ 
+                    success: true, 
+                    message: 'Race updated successfully' 
+                });
+
+            } catch (error) {
+                // Rollback on error
+                await connection.promise().rollback();
+                console.error('Error in calendar update:', error);
+                res.status(400).json({ 
+                    error: error.message || 'Failed to update race' 
+                });
             } finally {
                 connection.release();
             }
