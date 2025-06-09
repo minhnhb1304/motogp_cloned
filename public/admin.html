@@ -211,32 +211,8 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Photo</label>
-                            <select class="form-control" name="image_url" required>
-                                <option value="">Select a photo</option>
-                                <option value="martin.webp">Jorge Martín</option>
-                                <option value="bezzecchi.webp">Marco Bezzecchi</option>
-                                <option value="alex_marquez.webp">Álex Márquez</option>
-                                <option value="aldeguer.webp">Fermín Aldeguer</option>
-                                <option value="bagnaia.webp">Francesco Bagnaia</option>
-                                <option value="marc_marquez.webp">Marc Márquez</option>
-                                <option value="mir.webp">Joan Mir</option>
-                                <option value="marini.webp">Luca Marini</option>
-                                <option value="zarco.webp">Johann Zarco</option>
-                                <option value="chantra.webp">Somkiat Chantra</option>
-                                <option value="quartararo.webp">Fabio Quartararo</option>
-                                <option value="rins.webp">Álex Rins</option>
-                                <option value="morbidelli.webp">Franco Morbidelli</option>
-                                <option value="digia.webp">Fabio Di Giannantonio</option>
-                                <option value="miller.webp">Jack Miller</option>
-                                <option value="oliveira.webp">Miguel Oliveira</option>
-                                <option value="binder.webp">Brad Binder</option>
-                                <option value="acosta.webp">Pedro Acosta</option>
-                                <option value="bastianini.webp">Enea Bastianini</option>
-                                <option value="vinales.webp">Maverick Viñales</option>
-                                <option value="raul_fernandez.webp">Raúl Fernández</option>
-                                <option value="ogura.webp">Ai Ogura</option>
-                            </select>
-                            <small class="form-text text-muted">Select from available rider photos</small>
+                            <input type="file" class="form-control" name="photo" accept=".webp" required>
+                            <small class="form-text text-muted">Upload a .webp image file</small>
                         </div>
                         <button type="submit" class="btn btn-primary">Add Rider</button>
                     </form>
@@ -247,7 +223,7 @@
 
     <!-- Add Team Modal -->
     <div class="modal fade" id="addTeamModal">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Add New Team</h5>
@@ -255,22 +231,94 @@
                 </div>
                 <div class="modal-body">
                     <form id="addTeamForm">
+                        <!-- Team Information -->
                         <div class="mb-3">
                             <label class="form-label">Team Name</label>
-                            <input type="text" class="form-control" name="team_name" required placeholder="e.g., Ducati Lenovo Team">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Rider 1</label>
-                            <select class="form-control" name="rider1_id"></select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Rider 2</label>
-                            <select class="form-control" name="rider2_id"></select>
+                            <input type="text" class="form-control" name="team_name" required>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Team Picture</label>
-                            <input type="text" class="form-control" name="team_picture" placeholder="e.g., Ducati.webp">
+                            <input type="file" class="form-control" name="team_photo" accept=".webp" required>
                         </div>
+
+                        <!-- Rider 1 Section -->
+                        <div class="border p-3 mb-3">
+                            <h6>Rider 1</h6>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="rider1_type" value="existing" checked>
+                                    <label class="form-check-label">Select Existing Rider</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="rider1_type" value="new">
+                                    <label class="form-check-label">Add New Rider</label>
+                                </div>
+                            </div>
+
+                            <!-- Existing Rider 1 Selection -->
+                            <div class="rider1-existing">
+                                <div class="mb-3">
+                                    <label class="form-label">Select Rider</label>
+                                    <select class="form-control" name="rider1_id"></select>
+                                </div>
+                            </div>
+
+                            <!-- New Rider 1 Form -->
+                            <div class="rider1-new" style="display: none;">
+                                <div class="mb-3">
+                                    <label class="form-label">Name</label>
+                                    <input type="text" class="form-control" name="rider1_name">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Nationality</label>
+                                    <input type="text" class="form-control" name="rider1_nationality">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Photo</label>
+                                    <input type="file" class="form-control" name="rider1_photo" accept=".webp">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rider 2 Section -->
+                        <div class="border p-3 mb-3">
+                            <h6>Rider 2</h6>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="rider2_type" value="existing" checked>
+                                    <label class="form-check-label">Select Existing Rider</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="rider2_type" value="new">
+                                    <label class="form-check-label">Add New Rider</label>
+                                </div>
+                            </div>
+
+                            <!-- Existing Rider 2 Selection -->
+                            <div class="rider2-existing">
+                                <div class="mb-3">
+                                    <label class="form-label">Select Rider</label>
+                                    <select class="form-control" name="rider2_id"></select>
+                                </div>
+                            </div>
+
+                            <!-- New Rider 2 Form -->
+                            <div class="rider2-new" style="display: none;">
+                                <div class="mb-3">
+                                    <label class="form-label">Name</label>
+                                    <input type="text" class="form-control" name="rider2_name">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Nationality</label>
+                                    <input type="text" class="form-control" name="rider2_nationality">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Photo</label>
+                                    <input type="file" class="form-control" name="rider2_photo" accept=".webp">
+                                </div>
+                            </div>
+                        </div>
+
                         <button type="submit" class="btn btn-primary">Add Team</button>
                     </form>
                 </div>
@@ -628,7 +676,7 @@
                                 <td>${team.rider2_name ? escapeHtml(team.rider2_name) : 'Not assigned'}</td>
                                 <td class="text-center">
                                     ${team.team_picture ? 
-                                        `<img src="${team.team_picture}" 
+                                        `<img src="/images/teams/${team.team_picture}" 
                                              alt="${escapeHtml(team.team_name)}" 
                                              height="40" 
                                              class="rounded"
@@ -894,46 +942,57 @@
         }
 
         // Form submission handlers
-        document.getElementById('addRiderForm').addEventListener('submit', (e) => {
+        document.getElementById('addRiderForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData);
             
-            // Validate required fields
-            if (!data.name || !data.country) {
-                alert('Please fill in all required fields');
-                return;
-            }
-
-            // Ensure team_id is null if empty string
-            if (!data.team_id) {
-                data.team_id = null;
-            } else {
-                data.team_id = parseInt(data.team_id, 10);
-            }
-
-            fetch('/api/riders', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
+            try {
+                // First upload the photo
+                const photoFile = formData.get('photo');
+                if (photoFile.size > 0) {
+                    const photoFormData = new FormData();
+                    photoFormData.append('photo', photoFile);
+                    
+                    const uploadResponse = await fetch('/api/upload/rider', {
+                        method: 'POST',
+                        body: photoFormData
+                    });
+                    
+                    if (!uploadResponse.ok) {
+                        throw new Error('Failed to upload photo');
+                    }
+                    
+                    const uploadResult = await uploadResponse.json();
+                    formData.set('image_url', uploadResult.filename);
                 }
-                return response.json();
-            })
-            .then(() => {
-                loadRiders();
+                
+                // Then submit the rider data
+                const riderData = {
+                    name: formData.get('name'),
+                    country: formData.get('country'),
+                    team_id: formData.get('team_id') || null,
+                    image_url: formData.get('image_url')
+                };
+                
+                const response = await fetch('/api/riders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(riderData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to add rider');
+                }
+                
+                await loadRiders();
                 e.target.reset();
                 bootstrap.Modal.getInstance(document.getElementById('addRiderModal')).hide();
-            })
-            .catch(error => {
+            } catch (error) {
                 console.error('Error:', error);
                 alert('Failed to add rider. Please try again.');
-            });
+            }
         });
 
         document.getElementById('editRiderForm').addEventListener('submit', (e) => {
@@ -977,43 +1036,166 @@
             });
         });
 
-        document.getElementById('addTeamForm').addEventListener('submit', (e) => {
+        document.getElementById('addTeamForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData);
-            
-            // Validate required fields
-            if (!data.team_name) {
-                alert('Please fill in the team name');
-                return;
-            }
+            const formData = new FormData(this);
 
-            // Convert empty rider selections to null
-            if (!data.rider1_id) data.rider1_id = null;
-            if (!data.rider2_id) data.rider2_id = null;
+            try {
+                // First upload team photo
+                const teamPhotoFormData = new FormData();
+                const teamPhoto = formData.get('team_photo');
+                teamPhotoFormData.append('team_photo', teamPhoto);
+                teamPhotoFormData.append('team_name', formData.get('team_name'));
+                
+                const teamPhotoResponse = await fetch('/api/upload/team', {
+                    method: 'POST',
+                    body: teamPhotoFormData
+                });
+                
+                if (!teamPhotoResponse.ok) throw new Error('Failed to upload team photo');
+                const teamPhotoResult = await teamPhotoResponse.json();
 
-            fetch('/api/teams', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
-            .then(() => {
-                loadTeams();
-                loadRiders(); // Refresh riders as team assignments may have changed
-                e.target.reset();
+                // Handle riders (both new and existing)
+                const rider1Data = await handleRider(formData, '1');
+                const rider2Data = await handleRider(formData, '2');
+
+                // Create team with riders
+                const teamData = {
+                    team_name: formData.get('team_name'),
+                    team_picture: teamPhotoResult.filename,
+                    rider1_id: rider1Data.rider_id,
+                    rider2_id: rider2Data.rider_id
+                };
+
+                const response = await fetch('/api/teams', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(teamData)
+                });
+
+                if (!response.ok) throw new Error('Failed to create team');
+
+                // Refresh the lists and close modal
+                await loadTeams();
+                await loadRiders();
+                this.reset();
                 bootstrap.Modal.getInstance(document.getElementById('addTeamModal')).hide();
-            })
-            .catch(error => {
+
+            } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to add team. Please try again.');
-            });
+                alert('Failed to create team. Please try again.');
+            }
         });
+
+        async function handleRider(formData, riderNum) {
+            const riderType = formData.get(`rider${riderNum}_type`);
+            
+            if (riderType === 'existing') {
+                return { rider_id: formData.get(`rider${riderNum}_id`) };
+            } else {
+                // Upload rider photo
+                const photoFormData = new FormData();
+                const photo = formData.get(`rider${riderNum}_photo`);
+                photoFormData.append('photo', photo);
+                
+                const photoResponse = await fetch('/api/upload/rider', {
+                    method: 'POST',
+                    body: photoFormData
+                });
+                
+                if (!photoResponse.ok) throw new Error(`Failed to upload rider ${riderNum} photo`);
+                const photoResult = await photoResponse.json();
+
+                // Create new rider
+                const riderData = {
+                    name: formData.get(`rider${riderNum}_name`),
+                    country: formData.get(`rider${riderNum}_nationality`),
+                    image_url: photoResult.filename
+                };
+
+                const response = await fetch('/api/riders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(riderData)
+                });
+
+                if (!response.ok) throw new Error(`Failed to create rider ${riderNum}`);
+                const result = await response.json();
+                return { rider_id: result.rider_id };
+            }
+        }
+
+        // Initialize form when modal is shown
+        document.getElementById('addTeamModal').addEventListener('show.bs.modal', function() {
+            initializeTeamForm();
+        });
+
+        function initializeTeamForm() {
+            // Handle Rider 1 type selection
+            document.querySelectorAll('input[name="rider1_type"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    document.querySelector('.rider1-existing').style.display = 
+                        this.value === 'existing' ? 'block' : 'none';
+                    document.querySelector('.rider1-new').style.display = 
+                        this.value === 'new' ? 'block' : 'none';
+                    
+                    // Update form validation
+                    const rider1Select = document.querySelector('select[name="rider1_id"]');
+                    const rider1Inputs = document.querySelectorAll('.rider1-new input');
+                    
+                    if (this.value === 'existing') {
+                        rider1Select.required = true;
+                        rider1Inputs.forEach(input => input.required = false);
+                    } else {
+                        rider1Select.required = false;
+                        rider1Inputs.forEach(input => input.required = true);
+                    }
+                });
+            });
+
+            // Handle Rider 2 type selection
+            document.querySelectorAll('input[name="rider2_type"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    document.querySelector('.rider2-existing').style.display = 
+                        this.value === 'existing' ? 'block' : 'none';
+                    document.querySelector('.rider2-new').style.display = 
+                        this.value === 'new' ? 'block' : 'none';
+                    
+                    // Update form validation
+                    const rider2Select = document.querySelector('select[name="rider2_id"]');
+                    const rider2Inputs = document.querySelectorAll('.rider2-new input');
+                    
+                    if (this.value === 'existing') {
+                        rider2Select.required = true;
+                        rider2Inputs.forEach(input => input.required = false);
+                    } else {
+                        rider2Select.required = false;
+                        rider2Inputs.forEach(input => input.required = true);
+                    }
+                });
+            });
+
+            // Update available riders when first rider is selected
+            document.querySelector('select[name="rider1_id"]').addEventListener('change', function() {
+                const selectedRider = this.value;
+                const rider2Select = document.querySelector('select[name="rider2_id"]');
+                
+                // Re-enable all options
+                rider2Select.querySelectorAll('option').forEach(option => {
+                    option.disabled = false;
+                });
+                
+                // Disable the selected rider in rider 2 dropdown
+                if (selectedRider) {
+                    const option = rider2Select.querySelector(`option[value="${selectedRider}"]`);
+                    if (option) option.disabled = true;
+                }
+            });
+        }
 
         document.getElementById('editTeamForm').addEventListener('submit', (e) => {
             e.preventDefault();

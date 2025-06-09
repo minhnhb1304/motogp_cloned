@@ -5,9 +5,36 @@ const bodyParser = require('body-parser');
 const mysql = require('mysql2');
 const session = require('express-session');
 const bcrypt = require('bcrypt');
+const multer = require('multer');
+const path = require('path');
+const busboy = require('busboy');
 
 const app = express();
 const port = process.env.PORT || 3000;
+
+// Configure multer for file upload
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        // Check file type to determine destination
+        const dest = file.fieldname === 'team_photo' ? 'public/images/teams/' : 'public/images/rider/';
+        cb(null, dest);
+    },
+    filename: function (req, file, cb) {
+        // Just use the original filename
+        cb(null, file.originalname);
+    }
+});
+
+const upload = multer({ 
+    storage: storage,
+    fileFilter: function (req, file, cb) {
+        // Accept only webp images
+        if (!file.originalname.match(/\.(webp)$/)) {
+            return cb(new Error('Only webp images are allowed!'), false);
+        }
+        cb(null, true);
+    }
+});
 
 // Middleware
 app.use(bodyParser.json());
@@ -78,9 +105,14 @@ app.post('/login', async (req, res) => {
     });
 });
 
-app.get('/logout', (req, res) => {
-    req.session.destroy();
-    res.json({ success: true });
+app.post('/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            console.error('Logout error:', err);
+            return res.status(500).json({ success: false, error: 'Failed to logout' });
+        }
+        res.json({ success: true });
+    });
 });
 
 // Riders
@@ -113,6 +145,90 @@ app.get('/api/riders', (req, res) => {
     });
 });
 
+// Add new rider
+app.post('/api/riders', requireAuth, (req, res) => {
+    const { name, country, team_id, image_url } = req.body;
+
+    // Validate required fields
+    if (!name || !country) {
+        return res.status(400).json({ error: 'Name and nationality are required' });
+    }
+
+    const sql = 'INSERT INTO riders (name, country, team_id, image_url) VALUES (?, ?, ?, ?)';
+    pool.query(sql, [name, country, team_id || null, image_url || null], (err, result) => {
+        if (err) {
+            console.error('Error adding rider:', err);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+        res.json({ 
+            success: true, 
+            rider_id: result.insertId,
+            message: 'Rider added successfully' 
+        });
+    });
+});
+
+// Get specific rider
+app.get('/api/riders/:id', requireAuth, (req, res) => {
+    const sql = `
+        SELECT 
+            r.rider_id,
+            r.name,
+            r.country,
+            r.team_id,
+            r.image_url,
+            t.team_name
+        FROM riders r
+        LEFT JOIN teams t ON r.team_id = t.team_id
+        WHERE r.rider_id = ?`;
+    
+    pool.query(sql, [req.params.id], (err, results) => {
+        if (err) {
+            console.error('Error fetching rider:', err);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+        if (results.length === 0) {
+            return res.status(404).json({ error: 'Rider not found' });
+        }
+        res.json(results[0]);
+    });
+});
+
+// Update rider
+app.put('/api/riders/:id', requireAuth, (req, res) => {
+    const { name, country, team_id, image_url } = req.body;
+    
+    // Validate required fields
+    if (!name || !country) {
+        return res.status(400).json({ error: 'Name and nationality are required' });
+    }
+
+    const sql = `
+        UPDATE riders 
+        SET name = ?, country = ?, team_id = ?, image_url = ?
+        WHERE rider_id = ?`;
+    
+    pool.query(sql, [name, country, team_id || null, image_url || null, req.params.id], (err) => {
+        if (err) {
+            console.error('Error updating rider:', err);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+        res.json({ success: true, message: 'Rider updated successfully' });
+    });
+});
+
+// Delete rider
+app.delete('/api/riders/:id', requireAuth, (req, res) => {
+    const sql = 'DELETE FROM riders WHERE rider_id = ?';
+    pool.query(sql, [req.params.id], (err) => {
+        if (err) {
+            console.error('Error deleting rider:', err);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+        res.json({ success: true, message: 'Rider deleted successfully' });
+    });
+});
+
 // Teams
 app.get('/api/teams', (req, res) => {
     const sql = `
@@ -134,14 +250,7 @@ app.get('/api/teams', (req, res) => {
             return res.status(500).json({ error: 'Internal server error' });
         }
 
-        // Process results to add complete image URLs
-        results = results.map(team => ({
-            ...team,
-            team_picture: team.team_picture ? `/images/teams/${team.team_picture}` : null,
-            rider1_image: team.rider1_image ? `/images/rider/${team.rider1_image}` : null,
-            rider2_image: team.rider2_image ? `/images/rider/${team.rider2_image}` : null
-        }));
-
+        // Send results directly without modifying paths
         res.json(results);
     });
 });
@@ -401,6 +510,94 @@ app.get('/api/standings/teams', (req, res) => {
             return res.status(500).json({ error: 'Internal server error' });
         }
         res.json(results);
+    });
+});
+
+// Add file upload endpoints
+app.post('/api/upload/rider', requireAuth, upload.single('photo'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+    }
+    res.json({ 
+        success: true, 
+        filename: req.file.filename,
+        message: 'File uploaded successfully' 
+    });
+});
+
+app.post('/api/upload/team', requireAuth, upload.single('team_photo'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+    }
+    res.json({ 
+        success: true, 
+        filename: req.file.filename,
+        message: 'File uploaded successfully' 
+    });
+});
+
+// Add team endpoint
+app.post('/api/teams', requireAuth, async (req, res) => {
+    const { team_name, team_picture, rider1_id, rider2_id } = req.body;
+
+    // Validate required fields
+    if (!team_name || !team_picture) {
+        return res.status(400).json({ error: 'Team name and picture are required' });
+    }
+
+    // Start a transaction
+    pool.getConnection((err, connection) => {
+        if (err) {
+            console.error('Error getting connection:', err);
+            return res.status(500).json({ error: 'Internal server error' });
+        }
+
+        connection.beginTransaction(async (err) => {
+            if (err) {
+                connection.release();
+                console.error('Error starting transaction:', err);
+                return res.status(500).json({ error: 'Internal server error' });
+            }
+
+            try {
+                // Insert the team
+                const [teamResult] = await connection.promise().query(
+                    'INSERT INTO teams (team_name, team_picture) VALUES (?, ?)',
+                    [team_name, team_picture]
+                );
+
+                const team_id = teamResult.insertId;
+
+                // Update the team with rider IDs
+                await connection.promise().query(
+                    'UPDATE teams SET rider1_id = ?, rider2_id = ? WHERE team_id = ?',
+                    [rider1_id, rider2_id, team_id]
+                );
+
+                // Update riders' team_id
+                await connection.promise().query(
+                    'UPDATE riders SET team_id = ? WHERE rider_id IN (?, ?)',
+                    [team_id, rider1_id, rider2_id]
+                );
+
+                // Commit the transaction
+                await connection.promise().commit();
+
+                res.json({ 
+                    success: true, 
+                    team_id: team_id,
+                    message: 'Team created successfully' 
+                });
+
+            } catch (error) {
+                // Rollback on error
+                await connection.promise().rollback();
+                console.error('Error in team creation transaction:', error);
+                res.status(500).json({ error: 'Failed to create team' });
+            } finally {
+                connection.release();
+            }
+        });
     });
 });
 

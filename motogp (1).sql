@@ -41,7 +41,7 @@ CREATE TABLE `calendar` (
 
 INSERT INTO `calendar` (`calendar_id`, `race_name`, `country`, `start_date`, `end_date`) VALUES
 (1, 'PT Grand Prix of Thailand', 'THAILAND', '2025-02-28', '2025-03-02'),
-(2, 'Gran Premio YPF Energía de Argentina', 'ARGENTINA', '2025-03-14', '2026-03-16'),
+(2, 'Gran Premio YPF Energía de Argentina', 'ARGENTINA', '2025-03-14', '2025-03-16'),
 (3, 'Red Bull Grand Prix of The Americas', 'USA', '2025-03-28', '2025-03-30'),
 (4, 'Qatar Airways Grand Prix of Qatar', 'QATAR', '2025-04-11', '2025-04-13'),
 (5, 'Estrella Galicia 0,0 Grand Prix of Spain', 'SPAIN', '2025-04-25', '2025-04-27'),
