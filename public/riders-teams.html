@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>MotoGP - Riders & Teams</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .page-header {
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)),
+                        url('https://photos.motogp.com/2024/02/06/whatsapp-image-2024-02-06-at-18.52.39.jpeg');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 100px 0;
+            margin-bottom: 40px;
+            text-align: center;
+            margin-top: 56px;
+        }
+        .filter-section {
+            background: #f8f9fa;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stats-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .rider-card, .team-card {
+            transition: transform 0.3s;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        .rider-card:hover, .team-card:hover {
+            transform: translateY(-5px);
+        }
+        .rider-card .card-img-top {
+            height: 280px;
+            object-fit: cover;
+            object-position: top;
+            border-bottom: 3px solid var(--motogp-red);
+        }
+        .rider-number {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--motogp-red);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.2em;
+            z-index: 1;
+        }
+        .rider-info {
+            margin-top: 10px;
+        }
+        .rider-info p {
+            margin-bottom: 8px;
+        }
+        .rider-info i {
+            color: var(--motogp-red);
+        }
+        .points {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: var(--motogp-red);
+        }
+        .position {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        .team-riders {
+            border-top: 1px solid #dee2e6;
+            padding-top: 15px;
+        }
+        .rider-list {
+            margin-top: 10px;
+        }
+        .rider-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px;
+            padding: 5px;
+            background: #f8f9fa;
+            border-radius: 4px;
+        }
+        .rider-item .rider-number {
+            position: static;
+            padding: 2px 6px;
+            font-size: 0.9em;
+        }
+        .section-title {
+            position: relative;
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+        }
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background-color: var(--motogp-red);
+        }
+        .nav-pills .nav-link {
+            color: #333;
+            border-radius: 20px;
+            padding: 8px 20px;
+            margin: 0 5px;
+        }
+        .nav-pills .nav-link.active {
+            background-color: var(--motogp-red);
+        }
+        #teamFilter {
+            display: none;
+        }
+        .rider-card {
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+        .rider-card .card-body {
+            padding: 1.25rem;
+        }
+        @media (max-width: 768px) {
+            .rider-card .card-img-top {
+                height: 320px;
+            }
+        }
+        .team-card {
+            transition: transform 0.3s;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+        .team-card:hover {
+            transform: translateY(-5px);
+        }
+        .team-card .card-img-top {
+            height: 200px;
+            object-fit: contain;
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-bottom: 3px solid var(--motogp-red);
+        }
+        .team-card .card-body {
+            padding: 1.5rem;
+        }
+        .team-riders {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+        }
+        .team-riders h6 {
+            margin-bottom: 15px;
+            color: #666;
+            font-weight: 600;
+        }
+        .rider-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .rider-item {
+            background: #f8f9fa;
+            padding: 12px 15px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .rider-item:hover {
+            background: #e9ecef;
+        }
+        @media (max-width: 768px) {
+            .team-card .card-img-top {
+                height: 180px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-sm bg-light navbar-light fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="index.html">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/MotoGP_logo_%282024%29.svg/1200px-MotoGP_logo_%282024%29.svg.png" alt="MotoGP Logo" style="height:48px;">
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="calendar.html">CALENDAR</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="riders-teams.html">RIDERS & TEAMS</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="results-standings.html">RESULTS & STANDINGS</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="login.html">LOGIN</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="page-header">
+    <div class="container">
+        <h1>Riders & Teams</h1>
+        <p class="lead">Meet the stars of MotoGP™ and their teams</p>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Filter Section -->
+    <div class="filter-section">
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                <input type="text" class="form-control" id="searchInput" placeholder="Search riders or teams...">
+            </div>
+            <div class="col-md-4">
+                <select class="form-select" id="teamFilter">
+                    <option value="">All Teams</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <ul class="nav nav-pills justify-content-end" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="riders-tab" data-bs-toggle="pill" data-bs-target="#riders-section" type="button" role="tab">Riders</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="teams-tab" data-bs-toggle="pill" data-bs-target="#teams-section" type="button" role="tab">Teams</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Sections -->
+    <div class="tab-content">
+        <!-- Riders Section -->
+        <div class="tab-pane fade show active" id="riders-section" role="tabpanel">
+            <h2 class="section-title">RIDERS</h2>
+            <div class="row" id="riders-container">
+                <!-- Rider cards will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Teams Section -->
+        <div class="tab-pane fade" id="teams-section" role="tabpanel">
+            <h2 class="section-title">TEAMS</h2>
+            <div class="row" id="teams-container">
+                <!-- Team cards will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<footer class="bg-dark text-white mt-5">
+    <div class="container py-4">
+        <div class="row">
+            <div class="col-md-6">
+                <h5>About MotoGP™</h5>
+                <p>MotoGP™ is the premier motorcycle racing world championship; an eighteen-race series visiting fourteen countries, four continents and with pan-global television coverage.</p>
+            </div>
+            <div class="col-md-3">
+                <h5>Quick Links</h5>
+                <ul class="list-unstyled">
+                    <li><a href="calendar.html" class="text-white">Calendar</a></li>
+                    <li><a href="riders-teams.html" class="text-white">Riders & Teams</a></li>
+                    <li><a href="results-standings.html" class="text-white">Results & Standings</a></li>
+                </ul>
+            </div>
+            <div class="col-md-3">
+                <h5>Follow Us</h5>
+                <div class="d-flex gap-3">
+                    <a href="#" class="text-white"><i class="bi bi-facebook"></i></a>
+                    <a href="#" class="text-white"><i class="bi bi-twitter"></i></a>
+                    <a href="#" class="text-white"><i class="bi bi-instagram"></i></a>
+                    <a href="#" class="text-white"><i class="bi bi-youtube"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<script src="bootstrap.bundle.min.js"></script>
+<script>
+// Load Riders
+function loadRiders() {
+    fetch('/api/riders')
+        .then(response => response.json())
+        .then(riders => {
+            const container = document.getElementById('riders-container');
+            container.innerHTML = '';
+            riders.forEach(rider => {
+                container.innerHTML += `
+                    <div class="col-md-3 mb-4">
+                        <div class="card rider-card h-100" data-team="${rider.team}">
+                            <img src="${rider.image || '/images/rider/default-rider.webp'}" 
+                                 class="card-img-top rider-img" 
+                                 alt="${rider.name}"
+                                 onerror="this.onerror=null; this.src='/images/rider/default-rider.webp';">
+                            <div class="card-body">
+                                <h5 class="card-title">${rider.name}</h5>
+                                <div class="rider-info">
+                                    <p class="nationality"><i class="bi bi-globe"></i> ${rider.nationality}</p>
+                                    <p class="team"><i class="bi bi-people"></i> ${rider.team}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Update team filter options
+            const teamFilter = document.getElementById('teamFilter');
+            teamFilter.innerHTML = '<option value="">All Teams</option>';
+            const teams = [...new Set(riders.map(rider => rider.team))].sort();
+            teams.forEach(team => {
+                teamFilter.innerHTML += `<option value="${team}">${team}</option>`;
+            });
+        });
+}
+
+// Load Teams
+function loadTeams() {
+    fetch('/api/teams')
+        .then(response => response.json())
+        .then(teams => {
+            const container = document.getElementById('teams-container');
+            container.innerHTML = '';
+            teams.forEach(team => {
+                container.innerHTML += `
+                    <div class="col-md-4 mb-4">
+                        <div class="card team-card h-100">
+                            <img src="${team.team_picture || '/images/teams/default-team.webp'}" 
+                                 class="card-img-top team-img" 
+                                 alt="${team.team_name}"
+                                 onerror="this.onerror=null; this.src='/images/teams/default-team.webp';">
+                            <div class="card-body">
+                                <h5 class="card-title">${team.team_name}</h5>
+                                <div class="team-riders">
+                                    <h6>Team Riders</h6>
+                                    <div class="rider-list">
+                                        <div class="rider-item">
+                                            ${team.rider1_name}
+                                        </div>
+                                        <div class="rider-item">
+                                            ${team.rider2_name}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        });
+}
+
+// Show/hide team filter based on active tab
+document.getElementById('riders-tab').addEventListener('click', function() {
+    document.getElementById('teamFilter').style.display = 'block';
+    document.getElementById('searchInput').placeholder = 'Search riders...';
+});
+
+document.getElementById('teams-tab').addEventListener('click', function() {
+    document.getElementById('teamFilter').style.display = 'none';
+    document.getElementById('searchInput').placeholder = 'Search teams...';
+});
+
+// Update search functionality
+document.getElementById('searchInput').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const activeTab = document.querySelector('.tab-pane.active');
+    
+    if (activeTab.id === 'riders-section') {
+        const riderCards = document.querySelectorAll('#riders-container .rider-card');
+        riderCards.forEach(card => {
+            const name = card.querySelector('.card-title').textContent.toLowerCase();
+            const team = card.querySelector('.team').textContent.toLowerCase();
+            card.closest('.col-md-3').style.display = 
+                name.includes(searchTerm) || team.includes(searchTerm) ? '' : 'none';
+        });
+    } else {
+        const teamCards = document.querySelectorAll('#teams-container .team-card');
+        teamCards.forEach(card => {
+            const name = card.querySelector('.card-title').textContent.toLowerCase();
+            card.closest('.col-md-4').style.display = 
+                name.includes(searchTerm) ? '' : 'none';
+        });
+    }
+});
+
+// Update team filter functionality
+document.getElementById('teamFilter').addEventListener('change', function(e) {
+    const selectedTeam = e.target.value;
+    const riderCards = document.querySelectorAll('#riders-container .rider-card');
+
+    riderCards.forEach(card => {
+        const team = card.dataset.team;
+        card.closest('.col-md-3').style.display = 
+            !selectedTeam || team === selectedTeam ? '' : 'none';
+    });
+});
+
+// Initial load
+loadRiders();
+loadTeams();
+</script>
+
+</body>
+</html> 

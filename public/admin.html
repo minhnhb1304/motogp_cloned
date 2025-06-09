@@ -1,0 +1,1190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MotoGP - Admin Dashboard</title>
+    <link href="bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: #f8f9fa;
+            padding: 20px;
+        }
+        .content {
+            padding: 20px;
+        }
+        .nav-pills .nav-link {
+            color: #333;
+        }
+        .nav-pills .nav-link.active {
+            background-color: #0d6efd;
+            color: white;
+        }
+
+        /* Results table styles */
+        .position-badge {
+            display: inline-block;
+            min-width: 30px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: bold;
+            background-color: #f8f9fa;
+        }
+
+        .points-badge {
+            display: inline-block;
+            min-width: 30px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: bold;
+            background-color: #e9ecef;
+        }
+
+        .rider-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .rider-info small {
+            font-size: 0.85em;
+        }
+
+        .podium-position-1 {
+            background-color: rgba(255, 215, 0, 0.1) !important;
+        }
+
+        .podium-position-2 {
+            background-color: rgba(192, 192, 192, 0.1) !important;
+        }
+
+        .podium-position-3 {
+            background-color: rgba(205, 127, 50, 0.1) !important;
+        }
+
+        .table-light td {
+            height: 10px;
+            padding: 0 !important;
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-md-2 sidebar">
+                <div class="text-center mb-4">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/MotoGP_logo_%282024%29.svg/1200px-MotoGP_logo_%282024%29.svg.png" alt="MotoGP Logo" style="height: 40px;">
+                </div>
+                <div class="nav flex-column nav-pills">
+                    <button class="nav-link active" data-bs-toggle="pill" data-bs-target="#riders">Riders</button>
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#teams">Teams</button>
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#results">Results</button>
+                    <button class="nav-link" data-bs-toggle="pill" data-bs-target="#calendar">Calendar</button>
+                    <button class="nav-link" id="logoutBtn">Logout</button>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="col-md-10 content">
+                <div class="tab-content">
+                    <!-- Riders Section -->
+                    <div class="tab-pane fade show active" id="riders">
+                        <h2>Manage Riders</h2>
+                        <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addRiderModal">Add New Rider</button>
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="ridersTable">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Team</th>
+                                        <th>Nationality</th>
+                                        <th>Photo</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Teams Section -->
+                    <div class="tab-pane fade" id="teams">
+                        <h2>Manage Teams</h2>
+                        <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addTeamModal">Add New Team</button>
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="teamsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Team Name</th>
+                                        <th>Rider 1</th>
+                                        <th>Rider 2</th>
+                                        <th>Team Picture</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Results Section -->
+                    <div class="tab-pane fade" id="results">
+                        <h2>Manage Results</h2>
+                        <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addResultModal">Add New Result</button>
+                        
+                        <!-- Race Select -->
+                        <div class="mb-4">
+                            <label for="raceSelect" class="form-label">Filter by Race:</label>
+                            <select class="form-select" id="raceSelect">
+                                <option value="">All Races</option>
+                            </select>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="resultsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Race</th>
+                                        <th>Position</th>
+                                        <th>Rider</th>
+                                        <th>Team</th>
+                                        <th>Time</th>
+                                        <th>Points</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Calendar Section -->
+                    <div class="tab-pane fade" id="calendar">
+                        <h2>Manage Calendar</h2>
+                        <button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addCalendarModal">Add New Race</button>
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="calendarTable">
+                                <thead>
+                                    <tr>
+                                        <th>Race Name</th>
+                                        <th>Country</th>
+                                        <th>Start Date</th>
+                                        <th>End Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Rider Modal -->
+    <div class="modal fade" id="addRiderModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Rider</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addRiderForm">
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-control" name="name" required placeholder="e.g., Marc Márquez">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Team</label>
+                            <select class="form-control" name="team_id" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nationality</label>
+                            <input type="text" class="form-control" name="country" required placeholder="e.g., Spain">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Photo</label>
+                            <select class="form-control" name="image_url" required>
+                                <option value="">Select a photo</option>
+                                <option value="martin.webp">Jorge Martín</option>
+                                <option value="bezzecchi.webp">Marco Bezzecchi</option>
+                                <option value="alex_marquez.webp">Álex Márquez</option>
+                                <option value="aldeguer.webp">Fermín Aldeguer</option>
+                                <option value="bagnaia.webp">Francesco Bagnaia</option>
+                                <option value="marc_marquez.webp">Marc Márquez</option>
+                                <option value="mir.webp">Joan Mir</option>
+                                <option value="marini.webp">Luca Marini</option>
+                                <option value="zarco.webp">Johann Zarco</option>
+                                <option value="chantra.webp">Somkiat Chantra</option>
+                                <option value="quartararo.webp">Fabio Quartararo</option>
+                                <option value="rins.webp">Álex Rins</option>
+                                <option value="morbidelli.webp">Franco Morbidelli</option>
+                                <option value="digia.webp">Fabio Di Giannantonio</option>
+                                <option value="miller.webp">Jack Miller</option>
+                                <option value="oliveira.webp">Miguel Oliveira</option>
+                                <option value="binder.webp">Brad Binder</option>
+                                <option value="acosta.webp">Pedro Acosta</option>
+                                <option value="bastianini.webp">Enea Bastianini</option>
+                                <option value="vinales.webp">Maverick Viñales</option>
+                                <option value="raul_fernandez.webp">Raúl Fernández</option>
+                                <option value="ogura.webp">Ai Ogura</option>
+                            </select>
+                            <small class="form-text text-muted">Select from available rider photos</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Rider</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Team Modal -->
+    <div class="modal fade" id="addTeamModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Team</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addTeamForm">
+                        <div class="mb-3">
+                            <label class="form-label">Team Name</label>
+                            <input type="text" class="form-control" name="team_name" required placeholder="e.g., Ducati Lenovo Team">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Rider 1</label>
+                            <select class="form-control" name="rider1_id"></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Rider 2</label>
+                            <select class="form-control" name="rider2_id"></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Team Picture</label>
+                            <input type="text" class="form-control" name="team_picture" placeholder="e.g., Ducati.webp">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Team</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Rider Modal -->
+    <div class="modal fade" id="editRiderModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Rider</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editRiderForm">
+                        <input type="hidden" name="rider_id">
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Team</label>
+                            <select class="form-control" name="team_id" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nationality</label>
+                            <input type="text" class="form-control" name="country" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Photo</label>
+                            <select class="form-control" name="image_url" required>
+                                <option value="">Select a photo</option>
+                                <option value="martin.webp">Jorge Martín</option>
+                                <option value="bezzecchi.webp">Marco Bezzecchi</option>
+                                <option value="alex_marquez.webp">Álex Márquez</option>
+                                <option value="aldeguer.webp">Fermín Aldeguer</option>
+                                <option value="bagnaia.webp">Francesco Bagnaia</option>
+                                <option value="marc_marquez.webp">Marc Márquez</option>
+                                <option value="mir.webp">Joan Mir</option>
+                                <option value="marini.webp">Luca Marini</option>
+                                <option value="zarco.webp">Johann Zarco</option>
+                                <option value="chantra.webp">Somkiat Chantra</option>
+                                <option value="quartararo.webp">Fabio Quartararo</option>
+                                <option value="rins.webp">Álex Rins</option>
+                                <option value="morbidelli.webp">Franco Morbidelli</option>
+                                <option value="digia.webp">Fabio Di Giannantonio</option>
+                                <option value="miller.webp">Jack Miller</option>
+                                <option value="oliveira.webp">Miguel Oliveira</option>
+                                <option value="binder.webp">Brad Binder</option>
+                                <option value="acosta.webp">Pedro Acosta</option>
+                                <option value="bastianini.webp">Enea Bastianini</option>
+                                <option value="vinales.webp">Maverick Viñales</option>
+                                <option value="raul_fernandez.webp">Raúl Fernández</option>
+                                <option value="ogura.webp">Ai Ogura</option>
+                            </select>
+                            <small class="form-text text-muted">Select from available rider photos</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Rider</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Team Modal -->
+    <div class="modal fade" id="editTeamModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Team</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editTeamForm">
+                        <input type="hidden" name="team_id">
+                        <div class="mb-3">
+                            <label class="form-label">Team Name</label>
+                            <input type="text" class="form-control" name="team_name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Rider 1</label>
+                            <select class="form-control" name="rider1_id"></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Rider 2</label>
+                            <select class="form-control" name="rider2_id"></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Team Picture</label>
+                            <input type="text" class="form-control" name="team_picture">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Team</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Result Modal -->
+    <div class="modal fade" id="addResultModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Result</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addResultForm">
+                        <div class="mb-3">
+                            <label class="form-label">Race</label>
+                            <select class="form-control" name="calendar_id" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Rider</label>
+                            <select class="form-control" name="rider_id" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Team</label>
+                            <select class="form-control" name="team_id" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Time (format: HH:MM:SS)</label>
+                            <input type="text" class="form-control" name="race_time" required pattern="^(?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)?([0-5]?\d)$" placeholder="00:40:55">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Result</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Result Modal -->
+    <div class="modal fade" id="editResultModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Result</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editResultForm">
+                        <input type="hidden" name="result_id">
+                        <div class="mb-3">
+                            <label class="form-label">Race</label>
+                            <select class="form-control" name="calendar_id" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Rider</label>
+                            <select class="form-control" name="rider_id" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Team</label>
+                            <select class="form-control" name="team_id" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Time (format: HH:MM:SS)</label>
+                            <input type="text" class="form-control" name="race_time" required pattern="^(?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)?([0-5]?\d)$" placeholder="00:40:55">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Result</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Calendar Modal -->
+    <div class="modal fade" id="addCalendarModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Race</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addCalendarForm">
+                        <div class="mb-3">
+                            <label class="form-label">Race Name</label>
+                            <input type="text" class="form-control" name="race_name" required placeholder="e.g., Qatar Airways Grand Prix of Qatar">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Country</label>
+                            <input type="text" class="form-control" name="country" required placeholder="e.g., QATAR">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" class="form-control" name="start_date" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">End Date</label>
+                            <input type="date" class="form-control" name="end_date" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Add Race</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Calendar Modal -->
+    <div class="modal fade" id="editCalendarModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Race</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editCalendarForm">
+                        <input type="hidden" name="calendar_id">
+                        <div class="mb-3">
+                            <label class="form-label">Race Name</label>
+                            <input type="text" class="form-control" name="race_name" required placeholder="e.g., Qatar Airways Grand Prix of Qatar">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Country</label>
+                            <input type="text" class="form-control" name="country" required placeholder="e.g., QATAR">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" class="form-control" name="start_date" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">End Date</label>
+                            <input type="date" class="form-control" name="end_date" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Race</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="bootstrap.bundle.min.js"></script>
+    <script>
+        // Check authentication
+        fetch('/check-auth')
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(data => {
+                if (!data.authenticated) {
+                    window.location.href = '/login.html';
+                } else {
+                    // Only load data if authenticated
+                    loadRiders();
+                    loadTeams();
+                    loadResults();
+                    loadCalendar();
+                }
+            })
+            .catch(error => {
+                console.error('Authentication error:', error);
+                window.location.href = '/login.html';
+            });
+
+        // Logout handler
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+            fetch('/logout', { method: 'POST' })
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(() => {
+                    window.location.href = '/login.html';
+                })
+                .catch(error => {
+                    console.error('Logout error:', error);
+                    alert('Failed to logout. Please try again.');
+                });
+        });
+
+        // Load data functions
+        function loadRiders() {
+            // First load teams to populate team dropdown
+            fetch('/api/teams')
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(teams => {
+                    // Update team select options
+                    const teamSelects = document.querySelectorAll('select[name="team_id"]');
+                    const teamOptions = teams.map(team => 
+                        `<option value="${team.team_id}">${escapeHtml(team.team_name)}</option>`
+                    ).join('');
+                    teamSelects.forEach(select => {
+                        select.innerHTML = '<option value="">Select a team</option>' + teamOptions;
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading teams:', error);
+                });
+
+            // Then load riders with their team information
+            fetch('/api/riders')
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(riders => {
+                    const tbody = document.querySelector('#ridersTable tbody');
+                    tbody.innerHTML = '';
+                    riders.forEach(rider => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${escapeHtml(rider.name || '')}</td>
+                                <td>${escapeHtml(rider.team || 'Not assigned')}</td>
+                                <td>${escapeHtml(rider.nationality || '')}</td>
+                                <td>
+                                    ${rider.image_url ? 
+                                        `<img src="/images/rider/${escapeHtml(rider.image_url)}" alt="${escapeHtml(rider.name)}" height="50" class="rounded">` : 
+                                        'No photo'
+                                    }
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning" onclick="editRider(${rider.rider_id})">Edit</button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteRider(${rider.rider_id})">Delete</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+
+                    // Update rider select options for other forms (like Results form)
+                    const riderSelects = document.querySelectorAll('select[name="rider_id"]');
+                    const riderOptions = riders.map(rider => 
+                        `<option value="${rider.rider_id}">${escapeHtml(rider.name)} (${escapeHtml(rider.nationality)})</option>`
+                    ).join('');
+                    riderSelects.forEach(select => {
+                        select.innerHTML = '<option value="">Select a rider</option>' + riderOptions;
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading riders:', error);
+                    alert('Failed to load riders. Please refresh the page.');
+                });
+        }
+
+        function loadTeams() {
+            fetch('/api/teams')
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(teams => {
+                    const tbody = document.querySelector('#teamsTable tbody');
+                    tbody.innerHTML = '';
+                    teams.forEach(team => {
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${escapeHtml(team.team_name)}</td>
+                                <td>${team.rider1_name ? escapeHtml(team.rider1_name) : 'Not assigned'}</td>
+                                <td>${team.rider2_name ? escapeHtml(team.rider2_name) : 'Not assigned'}</td>
+                                <td class="text-center">
+                                    ${team.team_picture ? 
+                                        `<img src="${team.team_picture}" 
+                                             alt="${escapeHtml(team.team_name)}" 
+                                             height="40" 
+                                             class="rounded"
+                                             onerror="this.onerror=null; this.src='/images/teams/default-team.webp';">` : 
+                                        'No logo'
+                                    }
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning" onclick="editTeam(${team.team_id})">Edit</button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteTeam(${team.team_id})">Delete</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+
+                    // Update team select options in other forms
+                    const teamSelects = document.querySelectorAll('select[name="team_id"]');
+                    const teamOptions = teams.map(team => 
+                        `<option value="${team.team_id}">${escapeHtml(team.team_name)}</option>`
+                    ).join('');
+                    teamSelects.forEach(select => {
+                        select.innerHTML = '<option value="">Select a team</option>' + teamOptions;
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading teams:', error);
+                    alert('Failed to load teams. Please refresh the page.');
+                });
+        }
+
+        function loadResults() {
+            // First load races for the filter dropdown
+            fetch('/api/calendar')
+                .then(response => response.json())
+                .then(races => {
+                    const raceSelect = document.getElementById('raceSelect');
+                    raceSelect.innerHTML = '<option value="">All Races</option>';
+                    races.forEach(race => {
+                        raceSelect.innerHTML += `
+                            <option value="${race.calendar_id}">${race.race_name}</option>
+                        `;
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading races:', error);
+                });
+
+            // Load results
+            fetch('/api/results')
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(results => {
+                    const tbody = document.querySelector('#resultsTable tbody');
+                    tbody.innerHTML = '';
+                    
+                    // Group results by race
+                    const raceGroups = {};
+                    results.forEach(result => {
+                        if (!raceGroups[result.calendar_id]) {
+                            raceGroups[result.calendar_id] = [];
+                        }
+                        raceGroups[result.calendar_id].push(result);
+                    });
+
+                    // Sort races by date (most recent first) and display results
+                    Object.values(raceGroups).forEach(raceResults => {
+                        // Sort results by position
+                        raceResults.sort((a, b) => (a.position || Infinity) - (b.position || Infinity));
+                        
+                        raceResults.forEach((result, index) => {
+                            const isFirstInRace = index === 0;
+                            const rowClass = result.position <= 3 ? `podium-position-${result.position}` : '';
+                            
+                            tbody.innerHTML += `
+                                <tr class="${rowClass}" data-race-id="${result.calendar_id}">
+                                    <td>${isFirstInRace ? `<strong>${escapeHtml(result.race_name)}</strong>` : ''}</td>
+                                    <td>
+                                        <span class="position-badge">${result.position || 'DNF'}</span>
+                                    </td>
+                                    <td>
+                                        <div class="rider-info">
+                                            <strong>${escapeHtml(result.rider_name)}</strong>
+                                            <small class="text-muted">${escapeHtml(result.rider_country)}</small>
+                                        </div>
+                                    </td>
+                                    <td>${escapeHtml(result.team_name)}</td>
+                                    <td>${result.race_time || 'DNF'}</td>
+                                    <td>
+                                        <span class="points-badge">${result.points || '0'}</span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-warning" onclick="editResult(${result.result_id})">Edit</button>
+                                        <button class="btn btn-sm btn-danger" onclick="deleteResult(${result.result_id})">Delete</button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                        
+                        // Add a separator between races
+                        tbody.innerHTML += `
+                            <tr class="table-light" data-race-id="${raceResults[0].calendar_id}">
+                                <td colspan="7"></td>
+                            </tr>
+                        `;
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading results:', error);
+                    alert('Failed to load results. Please refresh the page.');
+                });
+        }
+
+        function loadCalendar() {
+            fetch('/api/calendar')
+                .then(response => response.json())
+                .then(races => {
+                    const tbody = document.querySelector('#calendarTable tbody');
+                    tbody.innerHTML = '';
+                    races.forEach(race => {
+                        // Format dates for display
+                        const startDate = new Date(race.start_date).toLocaleDateString();
+                        const endDate = new Date(race.end_date).toLocaleDateString();
+                        
+                        tbody.innerHTML += `
+                            <tr>
+                                <td>${race.race_name}</td>
+                                <td>${race.country}</td>
+                                <td>${startDate}</td>
+                                <td>${endDate}</td>
+                                <td>
+                                    <button class="btn btn-sm btn-warning" onclick="editRace(${race.calendar_id})">Edit</button>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteRace(${race.calendar_id})">Delete</button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+
+                    // Update race select options in result forms
+                    const raceSelects = document.querySelectorAll('select[name="calendar_id"]');
+                    const raceOptions = races.map(race => 
+                        `<option value="${race.calendar_id}">${race.race_name}</option>`
+                    ).join('');
+                    raceSelects.forEach(select => select.innerHTML = raceOptions);
+                });
+        }
+
+        // Edit functions
+        function editRider(id) {
+            fetch(`/api/riders/${id}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(rider => {
+                    const form = document.getElementById('editRiderForm');
+                    form.rider_id.value = rider.rider_id;
+                    form.name.value = rider.name || '';
+                    form.team_id.value = rider.team_id || '';
+                    form.country.value = rider.nationality || '';
+                    form.image_url.value = rider.image_url || '';
+
+                    // Show the modal
+                    const modal = new bootstrap.Modal(document.getElementById('editRiderModal'));
+                    modal.show();
+                })
+                .catch(error => {
+                    console.error('Error loading rider details:', error);
+                    alert('Failed to load rider details. Please try again.');
+                });
+        }
+
+        function editTeam(id) {
+            fetch(`/api/teams/${id}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(team => {
+                    const form = document.getElementById('editTeamForm');
+                    form.team_id.value = team.team_id;
+                    form.team_name.value = team.team_name || '';
+                    form.rider1_id.value = team.rider1_id || '';
+                    form.rider2_id.value = team.rider2_id || '';
+                    form.team_picture.value = team.team_picture || '';
+
+                    // Show the modal
+                    const modal = new bootstrap.Modal(document.getElementById('editTeamModal'));
+                    modal.show();
+                })
+                .catch(error => {
+                    console.error('Error loading team details:', error);
+                    alert('Failed to load team details. Please try again.');
+                });
+        }
+
+        function editResult(id) {
+            fetch(`/api/results/${id}`)
+                .then(response => response.json())
+                .then(result => {
+                    const form = document.getElementById('editResultForm');
+                    form.result_id.value = result.result_id;
+                    form.calendar_id.value = result.calendar_id;
+                    form.rider_id.value = result.rider_id;
+                    form.team_id.value = result.team_id;
+                    form.race_time.value = result.race_time;
+                    new bootstrap.Modal(document.getElementById('editResultModal')).show();
+                });
+        }
+
+        function editRace(id) {
+            fetch(`/api/calendar/${id}`)
+                .then(response => response.json())
+                .then(race => {
+                    const form = document.getElementById('editCalendarForm');
+                    form.calendar_id.value = race.calendar_id;
+                    form.race_name.value = race.race_name;
+                    form.country.value = race.country;
+                    // Format dates for input fields (YYYY-MM-DD)
+                    form.start_date.value = new Date(race.start_date).toISOString().split('T')[0];
+                    form.end_date.value = new Date(race.end_date).toISOString().split('T')[0];
+                    new bootstrap.Modal(document.getElementById('editCalendarModal')).show();
+                });
+        }
+
+        // Delete functions
+        function deleteRider(id) {
+            if (confirm('Are you sure you want to delete this rider?')) {
+                fetch(`/api/riders/${id}`, { method: 'DELETE' })
+                    .then(() => {
+                        loadRiders();
+                        loadTeams(); // Refresh teams as rider might be referenced
+                    });
+            }
+        }
+
+        function deleteTeam(id) {
+            if (confirm('Are you sure you want to delete this team?')) {
+                fetch(`/api/teams/${id}`, { method: 'DELETE' })
+                    .then(() => {
+                        loadTeams();
+                        loadRiders(); // Refresh riders as team might be referenced
+                    });
+            }
+        }
+
+        function deleteResult(id) {
+            if (confirm('Are you sure you want to delete this result?')) {
+                fetch(`/api/results/${id}`, { method: 'DELETE' })
+                    .then(() => loadResults());
+            }
+        }
+
+        function deleteRace(id) {
+            if (confirm('Are you sure you want to delete this race?')) {
+                fetch(`/api/calendar/${id}`, { method: 'DELETE' })
+                    .then(() => {
+                        loadCalendar();
+                        loadResults(); // Refresh results as race might be referenced
+                    });
+            }
+        }
+
+        // Form submission handlers
+        document.getElementById('addRiderForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            // Validate required fields
+            if (!data.name || !data.country) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            // Ensure team_id is null if empty string
+            if (!data.team_id) {
+                data.team_id = null;
+            } else {
+                data.team_id = parseInt(data.team_id, 10);
+            }
+
+            fetch('/api/riders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(() => {
+                loadRiders();
+                e.target.reset();
+                bootstrap.Modal.getInstance(document.getElementById('addRiderModal')).hide();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to add rider. Please try again.');
+            });
+        });
+
+        document.getElementById('editRiderForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            // Validate required fields
+            if (!data.name || !data.country) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            // Ensure team_id is null if empty string
+            if (!data.team_id) {
+                data.team_id = null;
+            } else {
+                data.team_id = parseInt(data.team_id, 10);
+            }
+
+            fetch(`/api/riders/${data.rider_id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(() => {
+                loadRiders();
+                bootstrap.Modal.getInstance(document.getElementById('editRiderModal')).hide();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to update rider. Please try again.');
+            });
+        });
+
+        document.getElementById('addTeamForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            // Validate required fields
+            if (!data.team_name) {
+                alert('Please fill in the team name');
+                return;
+            }
+
+            // Convert empty rider selections to null
+            if (!data.rider1_id) data.rider1_id = null;
+            if (!data.rider2_id) data.rider2_id = null;
+
+            fetch('/api/teams', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(() => {
+                loadTeams();
+                loadRiders(); // Refresh riders as team assignments may have changed
+                e.target.reset();
+                bootstrap.Modal.getInstance(document.getElementById('addTeamModal')).hide();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to add team. Please try again.');
+            });
+        });
+
+        document.getElementById('editTeamForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            // Validate required fields
+            if (!data.team_name) {
+                alert('Please fill in the team name');
+                return;
+            }
+
+            // Convert empty rider selections to null
+            if (!data.rider1_id) data.rider1_id = null;
+            if (!data.rider2_id) data.rider2_id = null;
+
+            fetch(`/api/teams/${data.team_id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(() => {
+                loadTeams();
+                loadRiders(); // Refresh riders as team assignments may have changed
+                bootstrap.Modal.getInstance(document.getElementById('editTeamModal')).hide();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to update team. Please try again.');
+            });
+        });
+
+        document.getElementById('addResultForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            // Validate required fields
+            if (!data.calendar_id || !data.rider_id || !data.team_id || !data.race_time) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            fetch('/api/results', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(() => {
+                loadResults();
+                e.target.reset();
+                bootstrap.Modal.getInstance(document.getElementById('addResultModal')).hide();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to add result. Please try again.');
+            });
+        });
+
+        document.getElementById('editResultForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData);
+            
+            // Validate required fields
+            if (!data.calendar_id || !data.rider_id || !data.team_id || !data.race_time) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            fetch(`/api/results/${data.result_id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Network response was not ok');
+                return response.json();
+            })
+            .then(() => {
+                loadResults();
+                bootstrap.Modal.getInstance(document.getElementById('editResultModal')).hide();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to update result. Please try again.');
+            });
+        });
+
+        document.getElementById('addCalendarForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            fetch('/api/calendar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(Object.fromEntries(formData))
+            })
+            .then(response => response.json())
+            .then(() => {
+                loadCalendar();
+                e.target.reset();
+                bootstrap.Modal.getInstance(document.getElementById('addCalendarModal')).hide();
+            });
+        });
+
+        document.getElementById('editCalendarForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const id = formData.get('calendar_id');
+            fetch(`/api/calendar/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(Object.fromEntries(formData))
+            })
+            .then(response => response.json())
+            .then(() => {
+                loadCalendar();
+                bootstrap.Modal.getInstance(document.getElementById('editCalendarModal')).hide();
+            });
+        });
+
+        // Add race filter handler
+        document.getElementById('raceSelect').addEventListener('change', function(e) {
+            const selectedRace = e.target.value;
+            const rows = document.querySelectorAll('#resultsTable tbody tr');
+            
+            rows.forEach(row => {
+                if (selectedRace) {
+                    // If a race is selected, only show rows for that race
+                    row.style.display = row.dataset.raceId === selectedRace ? '' : 'none';
+                } else {
+                    // If no race is selected (All Races), show all rows
+                    row.style.display = '';
+                }
+            });
+        });
+
+        // Initial load
+        loadRiders();
+        loadTeams();
+        loadResults();
+        loadCalendar();
+
+        // Helper function to escape HTML and prevent XSS
+        function escapeHtml(unsafe) {
+            if (!unsafe) return '';
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html> 

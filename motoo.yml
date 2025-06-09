@@ -1,0 +1,12 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_motoo
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: motogp123
+      MYSQL_DATABASE: motogp
+      MYSQL_USER: motogp_user
+      MYSQL_PASSWORD: motogp123
+    ports:
+      - "3307:3306"
