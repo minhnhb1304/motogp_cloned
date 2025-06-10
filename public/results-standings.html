@@ -673,23 +673,32 @@
 
             // Show top 3 on podium
             const top3 = results.slice(0, 3);
-            const positions = ["second", "first", "third"];
-            top3.forEach((result, index) => {
-              podium.innerHTML += `
-                    <div class="podium-position ${positions[index]}">
-                        <div class="podium-block">
-                            <div class="rider-image">
-                                <img src="${result.rider_image ? `/images/rider/${result.rider_image}` : "/images/rider/default-rider.webp"}" 
-                                     alt="${result.rider_name}"
-                                     onerror="this.onerror=null; this.src='/images/rider/default-rider.webp';">
-                            </div>
-                            <h4>${result.rider_name}</h4>
-                            <small>${result.team_name}</small>
-                            <div class="race-time">${result.race_time}</div>
-                        </div>
-                        <div class="position-number">${index === 1 ? "1st" : index === 0 ? "2nd" : "3rd"}</div>
+            
+            // Create podium in correct order (2nd - 1st - 3rd)
+            const podiumOrder = [
+              { position: "second", rider: top3[1], place: "2nd" },  // 2nd place
+              { position: "first", rider: top3[0], place: "1st" },   // 1st place
+              { position: "third", rider: top3[2], place: "3rd" }    // 3rd place
+            ];
+
+            podiumOrder.forEach(({ position, rider, place }) => {
+              if (rider) {
+                podium.innerHTML += `
+                  <div class="podium-position ${position}">
+                    <div class="podium-block">
+                      <div class="rider-image">
+                        <img src="${rider.rider_image ? `/images/rider/${rider.rider_image}` : "/images/rider/default-rider.webp"}" 
+                             alt="${rider.rider_name}"
+                             onerror="this.onerror=null; this.src='/images/rider/default-rider.webp';">
+                      </div>
+                      <h4>${rider.rider_name}</h4>
+                      <small>${rider.team_name}</small>
+                      <div class="race-time">${rider.race_time}</div>
                     </div>
+                    <div class="position-number">${place}</div>
+                  </div>
                 `;
+              }
             });
 
             // Update Results Table
@@ -870,6 +879,80 @@
         };
         
         return timeToSeconds(timeA) - timeToSeconds(timeB);
+      }
+
+      // Function to update standings display
+      function updateStandingsDisplay(standings) {
+        const podiumContainer = document.getElementById('podiumContainer');
+        const standingsTableBody = document.getElementById('standingsTableBody');
+        
+        // Clear existing content
+        podiumContainer.innerHTML = '';
+        standingsTableBody.innerHTML = '';
+
+        // Create podium for top 3 (2nd - 1st - 3rd)
+        if (standings.length >= 3) {
+          // Get top 3 riders in correct podium order
+          const firstPlace = standings[0];   // Winner
+          const secondPlace = standings[1];  // Runner-up
+          const thirdPlace = standings[2];   // Third place
+
+          const podiumHTML = `
+            <div class="podium-position second">
+              <div class="rider-image">
+                <img src="${secondPlace.image ? '/images/rider/' + secondPlace.image : '/images/rider/default-rider.webp'}" alt="${secondPlace.name}">
+              </div>
+              <div class="position-number">2</div>
+              <div class="rider-name">${secondPlace.name}</div>
+              <div class="rider-points">${secondPlace.points} pts</div>
+              <div class="rider-team">${secondPlace.team}</div>
+              <div class="rider-time">${secondPlace.race_time || ''}</div>
+            </div>
+            <div class="podium-position first">
+              <div class="rider-image">
+                <img src="${firstPlace.image ? '/images/rider/' + firstPlace.image : '/images/rider/default-rider.webp'}" alt="${firstPlace.name}">
+              </div>
+              <div class="position-number">1</div>
+              <div class="rider-name">${firstPlace.name}</div>
+              <div class="rider-points">${firstPlace.points} pts</div>
+              <div class="rider-team">${firstPlace.team}</div>
+              <div class="rider-time">${firstPlace.race_time || ''}</div>
+            </div>
+            <div class="podium-position third">
+              <div class="rider-image">
+                <img src="${thirdPlace.image ? '/images/rider/' + thirdPlace.image : '/images/rider/default-rider.webp'}" alt="${thirdPlace.name}">
+              </div>
+              <div class="position-number">3</div>
+              <div class="rider-name">${thirdPlace.name}</div>
+              <div class="rider-points">${thirdPlace.points} pts</div>
+              <div class="rider-team">${thirdPlace.team}</div>
+              <div class="rider-time">${thirdPlace.race_time || ''}</div>
+            </div>
+          `;
+          podiumContainer.innerHTML = podiumHTML;
+        }
+
+        // Create table rows for all standings
+        standings.forEach((rider, index) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>
+              <div class="d-flex align-items-center">
+                <img src="${rider.image ? '/images/rider/' + rider.image : '/images/rider/default-rider.webp'}" 
+                     alt="${rider.name}" 
+                     class="rider-table-img me-2">
+                ${rider.name}
+              </div>
+            </td>
+            <td>${rider.nationality}</td>
+            <td>${rider.team}</td>
+            <td>${rider.points}</td>
+            <td>${rider.wins}</td>
+            <td>${rider.podiums}</td>
+          `;
+          standingsTableBody.appendChild(row);
+        });
       }
     </script>
   </body>
