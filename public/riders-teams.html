@@ -13,7 +13,7 @@
     <style>
       .page-header {
         background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
-          url("https://photos.motogp.com/2024/02/06/whatsapp-image-2024-02-06-at-18.52.39.jpeg");
+          url("/images/banner2.jpg");
         background-size: cover;
         background-position: center;
         color: white;
@@ -193,6 +193,84 @@
           height: 180px;
         }
       }
+
+      /* Rider Overview Modal Styles */
+      .rider-details p {
+        margin-bottom: 0.5rem;
+        font-size: 1.1em;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .stat-item {
+        text-align: center;
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+      }
+
+      .stat-value {
+        font-size: 1.5em;
+        font-weight: bold;
+        color: var(--motogp-red);
+      }
+
+      .stat-label {
+        font-size: 0.9em;
+        color: #666;
+        margin-top: 0.25rem;
+      }
+
+      /* Recent Results Styles */
+      .recent-results {
+        background: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-top: 1.5rem;
+      }
+
+      .recent-results h5 {
+        margin-bottom: 1rem;
+        color: #333;
+      }
+
+      .recent-results-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+
+      .recent-result {
+        padding: 0.75rem;
+        background: white;
+        border-radius: 6px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: transform 0.2s;
+      }
+
+      .recent-result:hover {
+        transform: translateX(5px);
+      }
+
+      .recent-result strong {
+        color: var(--motogp-red);
+      }
+
+      #riderModalImage {
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+
+      .rider-card {
+        cursor: pointer;
+      }
     </style>
   </head>
   <body>
@@ -310,6 +388,57 @@
           <h2 class="section-title">TEAMS</h2>
           <div class="row" id="teams-container">
             <!-- Team cards will be loaded here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rider Overview Modal -->
+    <div class="modal fade" id="riderOverviewModal" tabindex="-1">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Rider Overview</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-md-4">
+                <img id="riderModalImage" src="" alt="" class="img-fluid rounded mb-3">
+              </div>
+              <div class="col-md-8">
+                <h3 id="riderModalName" class="mb-3"></h3>
+                <div class="rider-details">
+                  <p><strong>Nationality:</strong> <span id="riderModalNationality"></span></p>
+                  <p><strong>Team:</strong> <span id="riderModalTeam"></span></p>
+                  <p><strong>Teammate:</strong> <span id="riderModalTeammate"></span></p>
+                  <p><strong>Current Position:</strong> <span id="riderModalPosition"></span></p>
+                  <p><strong>Championship Points:</strong> <span id="riderModalTotalPoints"></span></p>
+                  <p><strong>Victories:</strong> <span id="riderModalVictories"></span></p>
+                </div>
+                <div class="season-stats mt-4">
+                  <h5>Season Performance</h5>
+                  <div class="stats-grid">
+                    <div class="stat-item">
+                      <div class="stat-value" id="riderModalCurrentPosition">-</div>
+                      <div class="stat-label">Current Position</div>
+                    </div>
+                    <div class="stat-item">
+                      <div class="stat-value" id="riderModalPodiums">-</div>
+                      <div class="stat-label">Podiums</div>
+                    </div>
+                    <div class="stat-item">
+                      <div class="stat-value" id="riderModalBestFinish">-</div>
+                      <div class="stat-label">Best Finish</div>
+                    </div>
+                    <div class="stat-item">
+                      <div class="stat-value" id="riderModalPoints">-</div>
+                      <div class="stat-label">Points</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -440,24 +569,16 @@
             riders.forEach((rider) => {
               container.innerHTML += `
                     <div class="col-md-3 mb-4">
-                        <div class="card rider-card h-100" data-team="${
-                          rider.team
-                        }">
-                            <img src="${
-                              rider.image || "/images/rider/default-rider.webp"
-                            }" 
+                        <div class="card rider-card h-100" data-rider-id="${rider.rider_id}" data-team="${rider.team}">
+                            <img src="${rider.image || "/images/rider/default-rider.webp"}" 
                                  class="card-img-top rider-img" 
                                  alt="${rider.name}"
                                  onerror="this.onerror=null; this.src='/images/rider/default-rider.webp';">
                             <div class="card-body">
                                 <h5 class="card-title">${rider.name}</h5>
                                 <div class="rider-info">
-                                    <p class="nationality"><i class="bi bi-globe"></i> ${
-                                      rider.nationality
-                                    }</p>
-                                    <p class="team"><i class="bi bi-people"></i> ${
-                                      rider.team
-                                    }</p>
+                                    <p class="nationality"><i class="bi bi-globe"></i> ${rider.nationality}</p>
+                                    <p class="team"><i class="bi bi-people"></i> ${rider.team}</p>
                                 </div>
                             </div>
                         </div>
@@ -465,16 +586,116 @@
                 `;
             });
 
+            // Add click handlers to rider cards
+            document.querySelectorAll('.rider-card').forEach(card => {
+              card.addEventListener('click', () => showRiderOverview(card.dataset.riderId));
+            });
+
             // Update team filter options
             const teamFilter = document.getElementById("teamFilter");
             teamFilter.innerHTML = '<option value="">All Teams</option>';
-            const teams = [
-              ...new Set(riders.map((rider) => rider.team)),
-            ].sort();
+            const teams = [...new Set(riders.map((rider) => rider.team))].sort();
             teams.forEach((team) => {
               teamFilter.innerHTML += `<option value="${team}">${team}</option>`;
             });
           });
+      }
+
+      // Show Rider Overview
+      function showRiderOverview(riderId) {
+        // Show loading state
+        const modal = new bootstrap.Modal(document.getElementById('riderOverviewModal'));
+        modal.show();
+        
+        // Reset modal content
+        document.getElementById('riderModalName').textContent = 'Loading...';
+        document.getElementById('riderModalImage').src = '/images/rider/default-rider.webp';
+        
+        // Fetch comprehensive rider stats
+        fetch(`/api/riders/${riderId}/stats`)
+          .then(res => res.json())
+          .then(data => {
+            // Update modal content with comprehensive stats
+            document.getElementById('riderModalImage').src = data.image_url ? `/images/rider/${data.image_url}` : '/images/rider/default-rider.webp';
+            document.getElementById('riderModalName').textContent = data.name;
+            document.getElementById('riderModalNationality').textContent = data.nationality;
+            document.getElementById('riderModalTeam').textContent = data.team || 'No Team';
+            document.getElementById('riderModalTeammate').textContent = data.teammate || 'No Teammate';
+            document.getElementById('riderModalPosition').textContent = data.championship_position ? 
+              `${data.championship_position}${getOrdinalSuffix(data.championship_position)}` : 'Not Ranked';
+            document.getElementById('riderModalCurrentPosition').textContent = data.championship_position ? 
+              `${data.championship_position}${getOrdinalSuffix(data.championship_position)}` : 'N/A';
+            document.getElementById('riderModalTotalPoints').textContent = data.statistics.points;
+            document.getElementById('riderModalPoints').textContent = data.statistics.points;
+            document.getElementById('riderModalVictories').textContent = data.statistics.wins;
+            document.getElementById('riderModalPodiums').textContent = data.statistics.podiums;
+            document.getElementById('riderModalBestFinish').textContent = data.statistics.best_finish ? 
+              `${data.statistics.best_finish}${getOrdinalSuffix(data.statistics.best_finish)}` : 'N/A';
+
+            // Add recent results if available
+            if (data.recent_results && data.recent_results.length > 0) {
+              const recentResultsHtml = data.recent_results.map(result => {
+                const raceDate = new Date(result.date).toLocaleDateString();
+                const position = result.position === 'DNF' ? 'DNF' : 
+                  `${result.position}${getOrdinalSuffix(result.position)}`;
+                
+                return `
+                  <div class="recent-result">
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div>
+                        <strong>${result.race_name}</strong>
+                        <div class="text-muted small">${raceDate}</div>
+                      </div>
+                      <div class="text-end">
+                        <div class="position ${result.position === 'DNF' ? 'text-danger' : ''}">${position}</div>
+                        <div class="points small">${result.points} points</div>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('');
+              
+              // Add recent results section if it doesn't exist
+              let recentResultsSection = document.querySelector('.recent-results');
+              if (!recentResultsSection) {
+                recentResultsSection = document.createElement('div');
+                recentResultsSection.className = 'recent-results mt-4';
+                recentResultsSection.innerHTML = `
+                  <h5>Recent Results</h5>
+                  <div class="recent-results-list">
+                    ${recentResultsHtml}
+                  </div>
+                  <div class="text-muted small text-center mt-3">
+                    Total Races: ${data.statistics.races}
+                  </div>
+                `;
+                document.querySelector('.season-stats').after(recentResultsSection);
+              } else {
+                recentResultsSection.querySelector('.recent-results-list').innerHTML = recentResultsHtml;
+                recentResultsSection.querySelector('.text-muted.small').textContent = `Total Races: ${data.statistics.races}`;
+              }
+            }
+          })
+          .catch(error => {
+            console.error('Error loading rider overview:', error);
+            document.getElementById('riderModalName').textContent = 'Error loading rider details';
+          });
+      }
+
+      // Helper function to add ordinal suffix to numbers
+      function getOrdinalSuffix(number) {
+        const j = number % 10,
+              k = number % 100;
+        if (j == 1 && k != 11) {
+          return "st";
+        }
+        if (j == 2 && k != 12) {
+          return "nd";
+        }
+        if (j == 3 && k != 13) {
+          return "rd";
+        }
+        return "th";
       }
 
       // Load Teams

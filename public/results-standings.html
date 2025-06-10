@@ -9,7 +9,7 @@
     <style>
       .page-header {
         background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)),
-          url("https://photos.motogp.com/2024/02/06/2024-motogp-sepang-test-day-1-1.gallery_full_top_lg.jpg");
+          url("/images/banner3.jpg");
         background-size: cover;
         background-position: center;
         color: white;
@@ -695,7 +695,16 @@
             // Update Results Table
             const tbody = document.querySelector("#resultsTable tbody");
             tbody.innerHTML = "";
-            results.forEach((result) => {
+            results.sort((a, b) => {
+                if (a.points !== b.points) {
+                    return b.points - a.points;
+                }
+                if (!a.race_time && !b.race_time) return 0;
+                if (!a.race_time) return 1;
+                if (!b.race_time) return -1;
+                
+                return compareRaceTimes(a.race_time, b.race_time);
+            }).forEach((result) => {
               tbody.innerHTML += `
                     <tr class="${result.position <= 3 ? "podium-position-" + result.position : ""}">
                         <td class="position-cell">
@@ -708,7 +717,7 @@
                             </div>
                         </td>
                         <td>${result.team_name}</td>
-                        <td>${result.race_time || "DNF"}</td>
+                        <td>${formatRaceTime(result.race_time)}</td>
                         <td>
                             <span class="points-badge">${result.points}</span>
                         </td>
@@ -841,6 +850,27 @@
       // Show initial message for race results
       document.getElementById("noRaceSelected").style.display = "block";
       document.getElementById("raceResults").style.display = "none";
+
+      // Helper function to format race time
+      function formatRaceTime(time) {
+        if (!time) return 'DNF';
+        return time;
+      }
+
+      // Helper function to sort race times
+      function compareRaceTimes(timeA, timeB) {
+        if (!timeA && !timeB) return 0;
+        if (!timeA) return 1;
+        if (!timeB) return -1;
+        
+        // Convert times to seconds for comparison
+        const timeToSeconds = (time) => {
+          const [hours, minutes, seconds] = time.split(':');
+          return (parseInt(hours) * 3600) + (parseInt(minutes) * 60) + parseInt(seconds);
+        };
+        
+        return timeToSeconds(timeA) - timeToSeconds(timeB);
+      }
     </script>
   </body>
 </html>

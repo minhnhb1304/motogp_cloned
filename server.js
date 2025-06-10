@@ -344,7 +344,7 @@ app.get('/api/results', (req, res) => {
             t.team_name,
             t.team_picture,
             CASE 
-                WHEN r.race_time = 'DNF' THEN 1
+                WHEN r.race_time IS NULL THEN 1
                 ELSE 0
             END as is_dnf
         FROM results r 
@@ -360,7 +360,7 @@ app.get('/api/results', (req, res) => {
         params.push(calendar_id);
     }
     
-    sql += ' ORDER BY c.start_date DESC, r.points DESC, is_dnf ASC, CASE WHEN r.race_time != "DNF" THEN r.race_time ELSE "ZZZZZ" END ASC';
+    sql += ' ORDER BY c.start_date DESC, r.points DESC, is_dnf ASC, CASE WHEN r.race_time IS NOT NULL THEN r.race_time ELSE "99:99:99" END ASC';
     
     pool.query(sql, params, (err, results) => {
         if (err) {
@@ -463,67 +463,103 @@ app.get('/api/results/:id', (req, res) => {
 
 // Results endpoints
 app.post('/api/results', requireAuth, async (req, res) => {
-    const { calendar_id, rider_id, team_id, race_time, points } = req.body;
+    const { calendar_id, rider_id, team_id, race_time } = req.body;
 
     // Validate required fields
-    if (!calendar_id || !rider_id || !team_id || !race_time || points === undefined) {
+    if (!calendar_id || !rider_id || !team_id || !race_time) {
         return res.status(400).json({ error: 'All fields are required' });
     }
 
     try {
-        // Get all results for this race
+        // Check if rider already has a result for this race
+        const [existingResult] = await pool.promise().query(
+            'SELECT * FROM results WHERE calendar_id = ? AND rider_id = ?',
+            [calendar_id, rider_id]
+        );
+
+        if (existingResult.length > 0) {
+            return res.status(400).json({ 
+                error: 'This rider already has a result for this race'
+            });
+        }
+
+        // Get all existing results for this race
         const [existingResults] = await pool.promise().query(
             `SELECT * FROM results 
-            WHERE calendar_id = ? 
-            ORDER BY points DESC, 
-            CASE WHEN race_time = 'DNF' THEN 1 ELSE 0 END ASC,
-            CASE WHEN race_time != 'DNF' THEN race_time ELSE 'ZZZZZ' END ASC`,
+            WHERE calendar_id = ?`,
             [calendar_id]
         );
 
-        // Calculate new position based on points and race_time
-        let newPosition = 1;
-        for (const result of existingResults) {
-            if (result.points < points) {
-                break;
-            }
-            if (result.points === points) {
-                if (result.race_time === 'DNF' && race_time !== 'DNF') {
-                    break;
+        // Function to convert race time to seconds for comparison
+        const timeToSeconds = (time) => {
+            if (time === 'DNF' || time === null) return Number.MAX_VALUE;
+            const [hours, minutes, seconds] = time.split(':');
+            return (parseInt(hours) * 3600) + (parseInt(minutes) * 60) + parseInt(seconds);
+        };
+
+        // Add new result to the array and sort all results
+        const allResults = [...existingResults, { race_time, rider_id, team_id }];
+        allResults.sort((a, b) => {
+            // Handle DNF cases
+            if ((a.race_time === 'DNF' || a.race_time === null) && (b.race_time === 'DNF' || b.race_time === null)) return 0;
+            if (a.race_time === 'DNF' || a.race_time === null) return 1;
+            if (b.race_time === 'DNF' || b.race_time === null) return -1;
+            
+            return timeToSeconds(a.race_time) - timeToSeconds(b.race_time);
+        });
+
+        // Points distribution
+        const pointsSystem = {
+            1: 25, 2: 20, 3: 16, 4: 13, 5: 11,
+            6: 10, 7: 9, 8: 8, 9: 7, 10: 6,
+            11: 5, 12: 4, 13: 3, 14: 2, 15: 1
+        };
+
+        // Start transaction
+        const connection = await pool.promise().getConnection();
+        await connection.beginTransaction();
+
+        try {
+            // Calculate position and points for the new result
+            const position = allResults.findIndex(r => 
+                r.rider_id === rider_id && r.team_id === team_id
+            ) + 1;
+            
+            const points = race_time === 'DNF' ? 0 : (pointsSystem[position] || 0);
+
+            // Insert the new result with NULL race_time for DNF
+            await connection.query(
+                'INSERT INTO results (calendar_id, rider_id, team_id, race_time, points, position) VALUES (?, ?, ?, ?, ?, ?)',
+                [calendar_id, rider_id, team_id, race_time === 'DNF' ? null : race_time, points, position]
+            );
+
+            // Update positions and points for all other results
+            for (let i = 0; i < allResults.length; i++) {
+                const result = allResults[i];
+                if (result.result_id) { // Only update existing results
+                    const newPosition = i + 1;
+                    const newPoints = result.race_time === 'DNF' ? 0 : (pointsSystem[newPosition] || 0);
+                    
+                    await connection.query(
+                        'UPDATE results SET position = ?, points = ? WHERE result_id = ?',
+                        [newPosition, newPoints, result.result_id]
+                    );
                 }
             }
-            newPosition++;
+
+            await connection.commit();
+            res.json({
+                success: true,
+                message: 'Result added successfully'
+            });
+
+        } catch (error) {
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
         }
 
-        // Insert the new result
-        const [result] = await pool.promise().query(
-            'INSERT INTO results (calendar_id, rider_id, team_id, race_time, points, position) VALUES (?, ?, ?, ?, ?, ?)',
-            [calendar_id, rider_id, team_id, race_time, points, newPosition]
-        );
-
-        // Update positions for all results
-        const [allResults] = await pool.promise().query(
-            `SELECT * FROM results 
-            WHERE calendar_id = ? 
-            ORDER BY points DESC, 
-            CASE WHEN race_time = 'DNF' THEN 1 ELSE 0 END ASC,
-            CASE WHEN race_time != 'DNF' THEN race_time ELSE 'ZZZZZ' END ASC`,
-            [calendar_id]
-        );
-
-        // Update positions
-        for (let i = 0; i < allResults.length; i++) {
-            await pool.promise().query(
-                'UPDATE results SET position = ? WHERE result_id = ?',
-                [i + 1, allResults[i].result_id]
-            );
-        }
-
-        res.json({
-            success: true,
-            result_id: result.insertId,
-            message: 'Result added successfully'
-        });
     } catch (error) {
         console.error('Error adding result:', error);
         res.status(500).json({ error: 'Failed to add result' });
@@ -550,11 +586,26 @@ app.get('/api/results/race/:calendar_id', requireAuth, async (req, res) => {
 
 app.put('/api/results/:id', requireAuth, async (req, res) => {
     const result_id = req.params.id;
-    const { calendar_id, rider_id, team_id, race_time, points } = req.body;
+    
+    // Log the entire request body
+    console.log('Update Result - Full request:', {
+        params: req.params,
+        body: req.body,
+        result_id: result_id
+    });
 
-    // Validate required fields
-    if (!calendar_id || !rider_id || !team_id || !race_time || points === undefined) {
-        return res.status(400).json({ error: 'All fields are required' });
+    // Extract only race_time, ignore other fields even if sent
+    const { race_time } = req.body;
+
+    console.log('Update Result - Extracted time:', {
+        race_time: race_time,
+        isDNF: race_time === 'DNF'
+    });
+
+    // Validate race_time is provided
+    if (!race_time) {
+        console.log('Update Result - Validation failed: No race time provided');
+        return res.status(400).json({ error: 'Race time is required' });
     }
 
     try {
@@ -563,60 +614,177 @@ app.put('/api/results/:id', requireAuth, async (req, res) => {
         await connection.beginTransaction();
 
         try {
-            // Update the result
-            await connection.query(
-                'UPDATE results SET calendar_id = ?, rider_id = ?, team_id = ?, race_time = ?, points = ? WHERE result_id = ?',
-                [calendar_id, rider_id, team_id, race_time, points, result_id]
+            // First get the existing result to preserve other fields
+            const [existingResult] = await connection.query(
+                'SELECT * FROM results WHERE result_id = ?',
+                [result_id]
             );
 
-            // Get all results for this race
+            if (existingResult.length === 0) {
+                throw new Error('Result not found');
+            }
+
+            console.log('Update Result - Existing result found:', existingResult[0]);
+
+            // Update only the race_time
+            const updateQuery = 'UPDATE results SET race_time = ? WHERE result_id = ?';
+            const updateValues = [race_time === 'DNF' ? null : race_time, result_id];
+            
+            console.log('Update Result - Executing update:', {
+                query: updateQuery,
+                values: updateValues
+            });
+
+            await connection.query(updateQuery, updateValues);
+
+            // Get all results for this race to update positions and points
             const [allResults] = await connection.query(
+                `SELECT * FROM results WHERE calendar_id = ?`,
+                [existingResult[0].calendar_id]
+            );
+
+            console.log('Update Result - All race results retrieved:', {
+                raceId: existingResult[0].calendar_id,
+                resultCount: allResults.length
+            });
+
+            // Sort results by race time
+            allResults.sort((a, b) => {
+                // Handle DNF cases
+                if ((a.race_time === null) && (b.race_time === null)) return 0;
+                if (a.race_time === null) return 1;
+                if (b.race_time === null) return -1;
+                
+                // Convert times to seconds for comparison
+                const timeToSeconds = (time) => {
+                    const [hours, minutes, seconds] = time.split(':');
+                    return (parseInt(hours) * 3600) + (parseInt(minutes) * 60) + parseInt(seconds);
+                };
+                
+                return timeToSeconds(a.race_time) - timeToSeconds(b.race_time);
+            });
+
+            // Points distribution
+            const pointsSystem = {
+                1: 25, 2: 20, 3: 16, 4: 13, 5: 11,
+                6: 10, 7: 9, 8: 8, 9: 7, 10: 6,
+                11: 5, 12: 4, 13: 3, 14: 2, 15: 1
+            };
+
+            // Update positions and points for all results
+            for (let i = 0; i < allResults.length; i++) {
+                const newPosition = i + 1;
+                const newPoints = allResults[i].race_time === null ? 0 : (pointsSystem[newPosition] || 0);
+                
+                await connection.query(
+                    'UPDATE results SET position = ?, points = ? WHERE result_id = ?',
+                    [newPosition, newPoints, allResults[i].result_id]
+                );
+            }
+
+            console.log('Update Result - Positions and points updated');
+
+            // Commit the transaction
+            await connection.commit();
+            connection.release();
+
+            res.json({
+                success: true,
+                message: 'Race time updated successfully'
+            });
+
+        } catch (error) {
+            // Rollback on error
+            await connection.rollback();
+            connection.release();
+            throw error;
+        }
+    } catch (error) {
+        console.error('Error updating race time:', error);
+        res.status(400).json({ 
+            error: error.message || 'Failed to update race time'
+        });
+    }
+});
+
+// Delete a result
+app.delete('/api/results/:id', requireAuth, async (req, res) => {
+    const result_id = req.params.id;
+
+    try {
+        // Get a connection for transaction
+        const connection = await pool.promise().getConnection();
+        await connection.beginTransaction();
+
+        try {
+            // First get the result details to know which race it belongs to
+            const [resultDetails] = await connection.query(
+                'SELECT calendar_id FROM results WHERE result_id = ?',
+                [result_id]
+            );
+
+            if (resultDetails.length === 0) {
+                await connection.rollback();
+                connection.release();
+                return res.status(404).json({ error: 'Result not found' });
+            }
+
+            const calendar_id = resultDetails[0].calendar_id;
+
+            // Delete the result
+            await connection.query(
+                'DELETE FROM results WHERE result_id = ?',
+                [result_id]
+            );
+
+            // Get remaining results for this race
+            const [remainingResults] = await connection.query(
                 `SELECT * FROM results 
                 WHERE calendar_id = ? 
-                ORDER BY points DESC, 
-                CASE WHEN race_time = 'DNF' THEN 1 ELSE 0 END ASC,
-                CASE WHEN race_time != 'DNF' THEN race_time ELSE 'ZZZZZ' END ASC`,
+                ORDER BY 
+                    CASE WHEN race_time = 'DNF' THEN 1 ELSE 0 END,
+                    CASE WHEN race_time != 'DNF' THEN race_time ELSE '99:99:99' END`,
                 [calendar_id]
             );
 
-            // Update positions for all results
-            for (let i = 0; i < allResults.length; i++) {
+            // Points distribution
+            const pointsSystem = {
+                1: 25, 2: 20, 3: 16, 4: 13, 5: 11,
+                6: 10, 7: 9, 8: 8, 9: 7, 10: 6,
+                11: 5, 12: 4, 13: 3, 14: 2, 15: 1
+            };
+
+            // Update positions and points for remaining results
+            for (let i = 0; i < remainingResults.length; i++) {
+                const newPosition = i + 1;
+                const newPoints = remainingResults[i].race_time === 'DNF' ? 0 : (pointsSystem[newPosition] || 0);
+                
                 await connection.query(
-                    'UPDATE results SET position = ? WHERE result_id = ?',
-                    [i + 1, allResults[i].result_id]
+                    'UPDATE results SET position = ?, points = ? WHERE result_id = ?',
+                    [newPosition, newPoints, remainingResults[i].result_id]
                 );
             }
 
             // Commit the transaction
             await connection.commit();
-
-            res.json({
-                success: true,
-                message: 'Result updated successfully'
-            });
-        } catch (error) {
-            // Rollback on error
-            await connection.rollback();
-            throw error;
-        } finally {
             connection.release();
+
+            res.json({ 
+                success: true,
+                message: 'Result deleted successfully'
+            });
+
+        } catch (error) {
+            await connection.rollback();
+            connection.release();
+            throw error;
         }
     } catch (error) {
-        console.error('Error updating result:', error);
-        res.status(500).json({ error: 'Failed to update result' });
+        console.error('Error deleting result:', error);
+        res.status(500).json({ 
+            error: 'Failed to delete result. Please try again.' 
+        });
     }
-});
-
-// Delete a result
-app.delete('/api/results/:id', requireAuth, (req, res) => {
-    const sql = 'DELETE FROM results WHERE result_id = ?';
-    pool.query(sql, [req.params.id], (err) => {
-        if (err) {
-            console.error('Error deleting result:', err);
-            return res.status(500).json({ error: 'Internal server error' });
-        }
-        res.json({ message: 'Result deleted successfully' });
-    });
 });
 
 // Calendar with results only
@@ -1156,6 +1324,182 @@ app.put('/api/calendar/:id', requireAuth, (req, res) => {
             }
         });
     });
+});
+
+// Get specific rider with comprehensive stats
+app.get('/api/riders/:id/stats', async (req, res) => {
+    const riderId = req.params.id;
+
+    try {
+        const connection = await pool.promise().getConnection();
+        
+        try {
+            // Get basic rider info with team
+            const [riderInfo] = await connection.query(`
+                SELECT 
+                    r.*,
+                    t.team_name,
+                    t.team_picture,
+                    (SELECT name FROM riders WHERE team_id = r.team_id AND rider_id != r.rider_id LIMIT 1) as teammate_name
+                FROM riders r
+                LEFT JOIN teams t ON r.team_id = t.team_id
+                WHERE r.rider_id = ?
+            `, [riderId]);
+
+            if (riderInfo.length === 0) {
+                return res.status(404).json({ error: 'Rider not found' });
+            }
+
+            // Get race statistics using the same logic as standings
+            const [raceStats] = await connection.query(`
+                SELECT 
+                    COUNT(CASE WHEN position = 1 THEN 1 END) as wins,
+                    COUNT(CASE WHEN position <= 3 THEN 1 END) as podiums,
+                    MIN(CASE WHEN position > 0 THEN position END) as best_finish,
+                    COALESCE(SUM(points), 0) as points,
+                    COUNT(DISTINCT calendar_id) as races_participated
+                FROM results 
+                WHERE rider_id = ?
+            `, [riderId]);
+
+            // Get recent race results
+            const [recentResults] = await connection.query(`
+                SELECT 
+                    r.*,
+                    c.race_name,
+                    c.country as race_country,
+                    c.start_date
+                FROM results r
+                JOIN calendar c ON r.calendar_id = c.calendar_id
+                WHERE r.rider_id = ?
+                ORDER BY c.start_date DESC
+                LIMIT 5
+            `, [riderId]);
+
+            // Get championship position using the same logic as standings
+            const [standings] = await connection.query(`
+                SELECT 
+                    rider_id,
+                    COALESCE(SUM(points), 0) as total_points
+                FROM results
+                GROUP BY rider_id
+                HAVING total_points > 0
+                ORDER BY total_points DESC
+            `);
+
+            const position = standings.findIndex(r => r.rider_id === parseInt(riderId)) + 1;
+
+            // Format response to match existing data structure
+            const response = {
+                rider_id: riderInfo[0].rider_id,
+                name: riderInfo[0].name,
+                nationality: riderInfo[0].country,
+                team: riderInfo[0].team_name,
+                teammate: riderInfo[0].teammate_name,
+                image_url: riderInfo[0].image_url,
+                championship_position: position || null,
+                statistics: {
+                    points: raceStats[0].points,
+                    wins: raceStats[0].wins,
+                    podiums: raceStats[0].podiums,
+                    best_finish: raceStats[0].best_finish,
+                    races: raceStats[0].races_participated
+                },
+                recent_results: recentResults.map(result => ({
+                    race_name: result.race_name,
+                    country: result.race_country,
+                    position: result.position,
+                    points: result.points || 0,
+                    race_time: result.race_time || 'DNF',
+                    date: result.start_date
+                }))
+            };
+
+            res.json(response);
+
+        } catch (error) {
+            console.error('Error fetching rider stats:', error);
+            res.status(500).json({ error: 'Failed to fetch rider statistics' });
+        } finally {
+            connection.release();
+        }
+    } catch (error) {
+        console.error('Error getting database connection:', error);
+        res.status(500).json({ error: 'Database connection error' });
+    }
+});
+
+// Get rider's race history
+app.get('/api/riders/:id/history', async (req, res) => {
+    const riderId = req.params.id;
+
+    try {
+        const [results] = await pool.promise().query(`
+            SELECT 
+                r.*,
+                c.race_name,
+                c.country as race_country,
+                c.start_date
+            FROM results r
+            JOIN calendar c ON r.calendar_id = c.calendar_id
+            WHERE r.rider_id = ?
+            ORDER BY c.start_date DESC
+        `, [riderId]);
+
+        res.json(results);
+    } catch (error) {
+        console.error('Error fetching rider race history:', error);
+        res.status(500).json({ error: 'Failed to fetch race history' });
+    }
+});
+
+// Get head-to-head comparison with teammate
+app.get('/api/riders/:id/teammate-comparison', async (req, res) => {
+    const riderId = req.params.id;
+
+    try {
+        const connection = await pool.promise().getConnection();
+        
+        try {
+            // First get rider's team and teammate
+            const [riderTeam] = await connection.query(`
+                SELECT 
+                    r1.team_id,
+                    r2.rider_id as teammate_id
+                FROM riders r1
+                JOIN riders r2 ON r1.team_id = r2.team_id AND r1.rider_id != r2.rider_id
+                WHERE r1.rider_id = ?
+            `, [riderId]);
+
+            if (riderTeam.length === 0) {
+                return res.json({ error: 'No teammate found' });
+            }
+
+            // Get comparison stats
+            const [comparison] = await connection.query(`
+                SELECT 
+                    rider_id,
+                    COUNT(CASE WHEN position = 1 THEN 1 END) as victories,
+                    COUNT(CASE WHEN position <= 3 THEN 1 END) as podiums,
+                    AVG(CASE WHEN position > 0 THEN position END) as avg_finish,
+                    SUM(points) as total_points
+                FROM results
+                WHERE rider_id IN (?, ?)
+                GROUP BY rider_id
+            `, [riderId, riderTeam[0].teammate_id]);
+
+            res.json(comparison);
+
+        } catch (error) {
+            console.error('Error fetching teammate comparison:', error);
+            res.status(500).json({ error: 'Failed to fetch comparison data' });
+        } finally {
+            connection.release();
+        }
+    } catch (error) {
+        console.error('Error getting database connection:', error);
+        res.status(500).json({ error: 'Database connection error' });
+    }
 });
 
 // Start server
