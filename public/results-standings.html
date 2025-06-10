@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <link rel="icon" type="image/webp" href="/images/favicon.webp" />
     <title>MotoGP - Results & Standings</title>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -636,26 +637,36 @@
         fetch(`/api/results?race=${raceId}`)
           .then((response) => response.json())
           .then((data) => {
-            if (data.race_status === 'ongoing' || data.race_status === 'upcoming') {
+            if (
+              data.race_status === "ongoing" ||
+              data.race_status === "upcoming"
+            ) {
               // Show message for upcoming or ongoing races
               const raceMessage = document.getElementById("raceMessage");
-              raceMessage.querySelector(".race-name").textContent = data.race_name;
-              raceMessage.querySelector(".race-message").textContent = data.message;
+              raceMessage.querySelector(".race-name").textContent =
+                data.race_name;
+              raceMessage.querySelector(".race-message").textContent =
+                data.message;
 
               // Format dates
               const startDate = new Date(data.start_date).toLocaleDateString();
               const endDate = new Date(data.end_date).toLocaleDateString();
-              raceMessage.querySelector(".race-dates").textContent = 
-                `Race dates: ${startDate} - ${endDate}`;
+              raceMessage.querySelector(
+                ".race-dates"
+              ).textContent = `Race dates: ${startDate} - ${endDate}`;
 
               raceMessage.style.display = "block";
               return;
             }
 
-            if (data.race_status === 'finished' && (!data.results || data.results.length === 0)) {
+            if (
+              data.race_status === "finished" &&
+              (!data.results || data.results.length === 0)
+            ) {
               const raceMessage = document.getElementById("raceMessage");
-              raceMessage.querySelector(".race-name").textContent = "No Results";
-              raceMessage.querySelector(".race-message").textContent = 
+              raceMessage.querySelector(".race-name").textContent =
+                "No Results";
+              raceMessage.querySelector(".race-message").textContent =
                 "No results available for this race yet.";
               raceMessage.querySelector(".race-dates").textContent = "";
               raceMessage.style.display = "block";
@@ -666,19 +677,19 @@
             document.getElementById("raceResults").style.display = "block";
 
             const results = data.results;
-            
+
             // Update Podium
             const podium = document.getElementById("podiumDisplay");
             podium.innerHTML = "";
 
             // Show top 3 on podium
             const top3 = results.slice(0, 3);
-            
+
             // Create podium in correct order (2nd - 1st - 3rd)
             const podiumOrder = [
-              { position: "second", rider: top3[1], place: "2nd" },  // 2nd place
-              { position: "first", rider: top3[0], place: "1st" },   // 1st place
-              { position: "third", rider: top3[2], place: "3rd" }    // 3rd place
+              { position: "second", rider: top3[1], place: "2nd" }, // 2nd place
+              { position: "first", rider: top3[0], place: "1st" }, // 1st place
+              { position: "third", rider: top3[2], place: "3rd" }, // 3rd place
             ];
 
             podiumOrder.forEach(({ position, rider, place }) => {
@@ -687,7 +698,11 @@
                   <div class="podium-position ${position}">
                     <div class="podium-block">
                       <div class="rider-image">
-                        <img src="${rider.rider_image ? `/images/rider/${rider.rider_image}` : "/images/rider/default-rider.webp"}" 
+                        <img src="${
+                          rider.rider_image
+                            ? `/images/rider/${rider.rider_image}`
+                            : "/images/rider/default-rider.webp"
+                        }" 
                              alt="${rider.rider_name}"
                              onerror="this.onerror=null; this.src='/images/rider/default-rider.webp';">
                       </div>
@@ -704,25 +719,35 @@
             // Update Results Table
             const tbody = document.querySelector("#resultsTable tbody");
             tbody.innerHTML = "";
-            results.sort((a, b) => {
+            results
+              .sort((a, b) => {
                 if (a.points !== b.points) {
-                    return b.points - a.points;
+                  return b.points - a.points;
                 }
                 if (!a.race_time && !b.race_time) return 0;
                 if (!a.race_time) return 1;
                 if (!b.race_time) return -1;
-                
+
                 return compareRaceTimes(a.race_time, b.race_time);
-            }).forEach((result) => {
-              tbody.innerHTML += `
-                    <tr class="${result.position <= 3 ? "podium-position-" + result.position : ""}">
+              })
+              .forEach((result) => {
+                tbody.innerHTML += `
+                    <tr class="${
+                      result.position <= 3
+                        ? "podium-position-" + result.position
+                        : ""
+                    }">
                         <td class="position-cell">
-                            <span class="position-badge">${result.position}</span>
+                            <span class="position-badge">${
+                              result.position
+                            }</span>
                         </td>
                         <td>
                             <div class="rider-info">
                                 <strong>${result.rider_name}</strong>
-                                <small class="text-muted d-block">${result.team_name}</small>
+                                <small class="text-muted d-block">${
+                                  result.team_name
+                                }</small>
                             </div>
                         </td>
                         <td>${result.team_name}</td>
@@ -732,7 +757,7 @@
                         </td>
                     </tr>
                 `;
-            });
+              });
           })
           .catch((error) => {
             console.error("Error loading race results:", error);
@@ -862,7 +887,7 @@
 
       // Helper function to format race time
       function formatRaceTime(time) {
-        if (!time) return 'DNF';
+        if (!time) return "DNF";
         return time;
       }
 
@@ -871,62 +896,77 @@
         if (!timeA && !timeB) return 0;
         if (!timeA) return 1;
         if (!timeB) return -1;
-        
+
         // Convert times to seconds for comparison
         const timeToSeconds = (time) => {
-          const [hours, minutes, seconds] = time.split(':');
-          return (parseInt(hours) * 3600) + (parseInt(minutes) * 60) + parseInt(seconds);
+          const [hours, minutes, seconds] = time.split(":");
+          return (
+            parseInt(hours) * 3600 + parseInt(minutes) * 60 + parseInt(seconds)
+          );
         };
-        
+
         return timeToSeconds(timeA) - timeToSeconds(timeB);
       }
 
       // Function to update standings display
       function updateStandingsDisplay(standings) {
-        const podiumContainer = document.getElementById('podiumContainer');
-        const standingsTableBody = document.getElementById('standingsTableBody');
-        
+        const podiumContainer = document.getElementById("podiumContainer");
+        const standingsTableBody =
+          document.getElementById("standingsTableBody");
+
         // Clear existing content
-        podiumContainer.innerHTML = '';
-        standingsTableBody.innerHTML = '';
+        podiumContainer.innerHTML = "";
+        standingsTableBody.innerHTML = "";
 
         // Create podium for top 3 (2nd - 1st - 3rd)
         if (standings.length >= 3) {
           // Get top 3 riders in correct podium order
-          const firstPlace = standings[0];   // Winner
-          const secondPlace = standings[1];  // Runner-up
-          const thirdPlace = standings[2];   // Third place
+          const firstPlace = standings[0]; // Winner
+          const secondPlace = standings[1]; // Runner-up
+          const thirdPlace = standings[2]; // Third place
 
           const podiumHTML = `
             <div class="podium-position second">
               <div class="rider-image">
-                <img src="${secondPlace.image ? '/images/rider/' + secondPlace.image : '/images/rider/default-rider.webp'}" alt="${secondPlace.name}">
+                <img src="${
+                  secondPlace.image
+                    ? "/images/rider/" + secondPlace.image
+                    : "/images/rider/default-rider.webp"
+                }" alt="${secondPlace.name}">
               </div>
               <div class="position-number">2</div>
               <div class="rider-name">${secondPlace.name}</div>
               <div class="rider-points">${secondPlace.points} pts</div>
               <div class="rider-team">${secondPlace.team}</div>
-              <div class="rider-time">${secondPlace.race_time || ''}</div>
+              <div class="rider-time">${secondPlace.race_time || ""}</div>
             </div>
             <div class="podium-position first">
               <div class="rider-image">
-                <img src="${firstPlace.image ? '/images/rider/' + firstPlace.image : '/images/rider/default-rider.webp'}" alt="${firstPlace.name}">
+                <img src="${
+                  firstPlace.image
+                    ? "/images/rider/" + firstPlace.image
+                    : "/images/rider/default-rider.webp"
+                }" alt="${firstPlace.name}">
               </div>
               <div class="position-number">1</div>
               <div class="rider-name">${firstPlace.name}</div>
               <div class="rider-points">${firstPlace.points} pts</div>
               <div class="rider-team">${firstPlace.team}</div>
-              <div class="rider-time">${firstPlace.race_time || ''}</div>
+              <div class="rider-time">${firstPlace.race_time || ""}</div>
             </div>
             <div class="podium-position third">
               <div class="rider-image">
-                <img src="${thirdPlace.image ? '/images/rider/' + thirdPlace.image : '/images/rider/default-rider.webp'}" alt="${thirdPlace.name}">
+                <img src="${
+                  thirdPlace.image
+                    ? "/images/rider/" + thirdPlace.image
+                    : "/images/rider/default-rider.webp"
+                }" alt="${thirdPlace.name}">
               </div>
               <div class="position-number">3</div>
               <div class="rider-name">${thirdPlace.name}</div>
               <div class="rider-points">${thirdPlace.points} pts</div>
               <div class="rider-team">${thirdPlace.team}</div>
-              <div class="rider-time">${thirdPlace.race_time || ''}</div>
+              <div class="rider-time">${thirdPlace.race_time || ""}</div>
             </div>
           `;
           podiumContainer.innerHTML = podiumHTML;
@@ -934,12 +974,16 @@
 
         // Create table rows for all standings
         standings.forEach((rider, index) => {
-          const row = document.createElement('tr');
+          const row = document.createElement("tr");
           row.innerHTML = `
             <td>${index + 1}</td>
             <td>
               <div class="d-flex align-items-center">
-                <img src="${rider.image ? '/images/rider/' + rider.image : '/images/rider/default-rider.webp'}" 
+                <img src="${
+                  rider.image
+                    ? "/images/rider/" + rider.image
+                    : "/images/rider/default-rider.webp"
+                }" 
                      alt="${rider.name}" 
                      class="rider-table-img me-2">
                 ${rider.name}

@@ -9,6 +9,50 @@ body {
   line-height: 1.6;
 }
 
+/* MGPDisplay Fonts */
+@font-face {
+  font-family: "MGPDisplayLight";
+  src: url("/images/fonts/MGPDisplay-Light.otf") format("opentype");
+  font-weight: 300;
+}
+
+@font-face {
+  font-family: "MGPDisplay";
+  src: url("/images/fonts/MGPDisplay-Medium.otf") format("opentype");
+  font-weight: 700;
+}
+
+@font-face {
+  font-family: "MGPDisplayBold";
+  src: url("/images/fonts/MGPDisplay-Bold.otf") format("opentype");
+  font-weight: 700;
+}
+
+/* MGPText Fonts */
+@font-face {
+  font-family: "MGPTextLight";
+  src: url("/images/fonts/MGPText-Light.ttf") format("truetype");
+  font-weight: 300;
+}
+
+@font-face {
+  font-family: "MGPTextRegular";
+  src: url("/images/fonts/MGPText-Regular.ttf") format("truetype");
+  font-weight: 300;
+}
+
+@font-face {
+  font-family: "MGPTextMedium";
+  src: url("/images/fonts/MGPText-Medium.ttf") format("truetype");
+  font-weight: 800;
+}
+
+@font-face {
+  font-family: "MGPTextBold";
+  src: url("/images/fonts/MGPText-Bold.ttf") format("truetype");
+  font-weight: 700;
+}
+
 /* Navigation */
 .navbar {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -138,7 +182,7 @@ body {
   margin-bottom: 20px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  font-family: "Anton", sans-serif;
+  font-family: "MGPDisplay";
 }
 
 .watch .container {
