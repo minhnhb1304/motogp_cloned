@@ -342,7 +342,11 @@ app.get('/api/results', (req, res) => {
             rd.country as rider_country,
             rd.image_url as rider_image,
             t.team_name,
-            t.team_picture
+            t.team_picture,
+            CASE 
+                WHEN r.race_time = 'DNF' THEN 1
+                ELSE 0
+            END as is_dnf
         FROM results r 
         JOIN calendar c ON r.calendar_id = c.calendar_id 
         JOIN riders rd ON r.rider_id = rd.rider_id
@@ -356,7 +360,7 @@ app.get('/api/results', (req, res) => {
         params.push(calendar_id);
     }
     
-    sql += ' ORDER BY c.start_date DESC, r.position ASC';
+    sql += ' ORDER BY c.start_date DESC, r.points DESC, is_dnf ASC, CASE WHEN r.race_time != "DNF" THEN r.race_time ELSE "ZZZZZ" END ASC';
     
     pool.query(sql, params, (err, results) => {
         if (err) {
@@ -457,91 +461,150 @@ app.get('/api/results/:id', (req, res) => {
     });
 });
 
-// Add a new result
-app.post('/api/results', requireAuth, (req, res) => {
-    const { calendar_id, rider_id, team_id, race_time } = req.body;
-    
-    // Calculate position and points based on race_time
-    const getPositionSql = `
-        SELECT COUNT(*) + 1 as position
-        FROM results 
-        WHERE calendar_id = ? AND race_time < ?`;
-    
-    pool.query(getPositionSql, [calendar_id, race_time], (err, positionResult) => {
-        if (err) {
-            console.error('Error calculating position:', err);
-            return res.status(500).json({ error: 'Internal server error' });
-        }
-        
-        const position = positionResult[0].position;
-        let points = 0;
-        
-        // Assign points based on position
-        if (position === 1) points = 25;
-        else if (position === 2) points = 20;
-        else if (position === 3) points = 16;
-        else if (position === 4) points = 13;
-        else if (position === 5) points = 11;
-        else if (position === 6) points = 10;
-        else if (position <= 15) points = 15 - position + 1;
-        
-        const insertSql = `
-            INSERT INTO results 
-            (calendar_id, rider_id, team_id, position, points, race_time)
-            VALUES (?, ?, ?, ?, ?, ?)`;
-        
-        pool.query(insertSql, [calendar_id, rider_id, team_id, position, points, race_time], (err, result) => {
-            if (err) {
-                console.error('Error adding result:', err);
-                return res.status(500).json({ error: 'Internal server error' });
+// Results endpoints
+app.post('/api/results', requireAuth, async (req, res) => {
+    const { calendar_id, rider_id, team_id, race_time, points } = req.body;
+
+    // Validate required fields
+    if (!calendar_id || !rider_id || !team_id || !race_time || points === undefined) {
+        return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    try {
+        // Get all results for this race
+        const [existingResults] = await pool.promise().query(
+            `SELECT * FROM results 
+            WHERE calendar_id = ? 
+            ORDER BY points DESC, 
+            CASE WHEN race_time = 'DNF' THEN 1 ELSE 0 END ASC,
+            CASE WHEN race_time != 'DNF' THEN race_time ELSE 'ZZZZZ' END ASC`,
+            [calendar_id]
+        );
+
+        // Calculate new position based on points and race_time
+        let newPosition = 1;
+        for (const result of existingResults) {
+            if (result.points < points) {
+                break;
             }
-            res.json({ id: result.insertId, message: 'Result added successfully' });
+            if (result.points === points) {
+                if (result.race_time === 'DNF' && race_time !== 'DNF') {
+                    break;
+                }
+            }
+            newPosition++;
+        }
+
+        // Insert the new result
+        const [result] = await pool.promise().query(
+            'INSERT INTO results (calendar_id, rider_id, team_id, race_time, points, position) VALUES (?, ?, ?, ?, ?, ?)',
+            [calendar_id, rider_id, team_id, race_time, points, newPosition]
+        );
+
+        // Update positions for all results
+        const [allResults] = await pool.promise().query(
+            `SELECT * FROM results 
+            WHERE calendar_id = ? 
+            ORDER BY points DESC, 
+            CASE WHEN race_time = 'DNF' THEN 1 ELSE 0 END ASC,
+            CASE WHEN race_time != 'DNF' THEN race_time ELSE 'ZZZZZ' END ASC`,
+            [calendar_id]
+        );
+
+        // Update positions
+        for (let i = 0; i < allResults.length; i++) {
+            await pool.promise().query(
+                'UPDATE results SET position = ? WHERE result_id = ?',
+                [i + 1, allResults[i].result_id]
+            );
+        }
+
+        res.json({
+            success: true,
+            result_id: result.insertId,
+            message: 'Result added successfully'
         });
-    });
+    } catch (error) {
+        console.error('Error adding result:', error);
+        res.status(500).json({ error: 'Failed to add result' });
+    }
 });
 
-// Update a result
-app.put('/api/results/:id', requireAuth, (req, res) => {
-    const { calendar_id, rider_id, team_id, race_time } = req.body;
-    
-    // Recalculate position and points
-    const getPositionSql = `
-        SELECT COUNT(*) + 1 as position
-        FROM results 
-        WHERE calendar_id = ? AND race_time < ? AND result_id != ?`;
-    
-    pool.query(getPositionSql, [calendar_id, race_time, req.params.id], (err, positionResult) => {
-        if (err) {
-            console.error('Error calculating position:', err);
-            return res.status(500).json({ error: 'Internal server error' });
-        }
-        
-        const position = positionResult[0].position;
-        let points = 0;
-        
-        // Assign points based on position
-        if (position === 1) points = 25;
-        else if (position === 2) points = 20;
-        else if (position === 3) points = 16;
-        else if (position === 4) points = 13;
-        else if (position === 5) points = 11;
-        else if (position === 6) points = 10;
-        else if (position <= 15) points = 15 - position + 1;
-        
-        const updateSql = `
-            UPDATE results 
-            SET calendar_id = ?, rider_id = ?, team_id = ?, 
-                position = ?, points = ?, race_time = ?
-            WHERE result_id = ?`;
-        
-        pool.query(updateSql, [calendar_id, rider_id, team_id, position, points, race_time, req.params.id], (err) => {
-            if (err) {
-                console.error('Error updating result:', err);
-                return res.status(500).json({ error: 'Internal server error' });
+app.get('/api/results/race/:calendar_id', requireAuth, async (req, res) => {
+    try {
+        const [results] = await pool.promise().query(
+            `SELECT r.*, rd.name as rider_name, t.team_name 
+             FROM results r 
+             JOIN riders rd ON r.rider_id = rd.rider_id 
+             JOIN teams t ON r.team_id = t.team_id 
+             WHERE r.calendar_id = ? 
+             ORDER BY r.points DESC`,
+            [req.params.calendar_id]
+        );
+        res.json(results);
+    } catch (error) {
+        console.error('Error fetching race results:', error);
+        res.status(500).json({ error: 'Failed to fetch race results' });
+    }
+});
+
+app.put('/api/results/:id', requireAuth, async (req, res) => {
+    const result_id = req.params.id;
+    const { calendar_id, rider_id, team_id, race_time, points } = req.body;
+
+    // Validate required fields
+    if (!calendar_id || !rider_id || !team_id || !race_time || points === undefined) {
+        return res.status(400).json({ error: 'All fields are required' });
+    }
+
+    try {
+        // Start a transaction
+        const connection = await pool.promise().getConnection();
+        await connection.beginTransaction();
+
+        try {
+            // Update the result
+            await connection.query(
+                'UPDATE results SET calendar_id = ?, rider_id = ?, team_id = ?, race_time = ?, points = ? WHERE result_id = ?',
+                [calendar_id, rider_id, team_id, race_time, points, result_id]
+            );
+
+            // Get all results for this race
+            const [allResults] = await connection.query(
+                `SELECT * FROM results 
+                WHERE calendar_id = ? 
+                ORDER BY points DESC, 
+                CASE WHEN race_time = 'DNF' THEN 1 ELSE 0 END ASC,
+                CASE WHEN race_time != 'DNF' THEN race_time ELSE 'ZZZZZ' END ASC`,
+                [calendar_id]
+            );
+
+            // Update positions for all results
+            for (let i = 0; i < allResults.length; i++) {
+                await connection.query(
+                    'UPDATE results SET position = ? WHERE result_id = ?',
+                    [i + 1, allResults[i].result_id]
+                );
             }
-            res.json({ message: 'Result updated successfully' });
-        });
-    });
+
+            // Commit the transaction
+            await connection.commit();
+
+            res.json({
+                success: true,
+                message: 'Result updated successfully'
+            });
+        } catch (error) {
+            // Rollback on error
+            await connection.rollback();
+            throw error;
+        } finally {
+            connection.release();
+        }
+    } catch (error) {
+        console.error('Error updating result:', error);
+        res.status(500).json({ error: 'Failed to update result' });
+    }
 });
 
 // Delete a result

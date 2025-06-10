@@ -405,7 +405,7 @@
           const months = [
             ...new Set(
               races.map((race) =>
-                new Date(race.start_date).toLocaleString("default", {
+                new Date(race.start_date).toLocaleString("en-US", {
                   month: "long",
                 })
               )
@@ -438,7 +438,7 @@
             filteredRaces.forEach((race) => {
               const startDate = new Date(race.start_date);
               const endDate = new Date(race.end_date);
-              const month = startDate.toLocaleString("default", {
+              const month = startDate.toLocaleString("en-US", {
                 month: "long",
               });
 
@@ -587,10 +587,9 @@
               document.getElementById("statusFilter").value;
 
             const filteredRaces = races.filter((race) => {
-              const month = new Date(race.start_date).toLocaleString(
-                "default",
-                { month: "long" }
-              );
+              const month = new Date(race.start_date).toLocaleString("en-US", {
+                month: "long",
+              });
               const today = new Date();
               const status =
                 new Date(race.end_date) < today ? "completed" : "upcoming";

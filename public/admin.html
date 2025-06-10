@@ -647,19 +647,29 @@
                     <form id="addResultForm">
                         <div class="mb-3">
                             <label class="form-label">Race</label>
-                            <select class="form-control" name="calendar_id" required></select>
+                            <select class="form-control" name="calendar_id" required>
+                                <option value="">Select Race</option>
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Rider</label>
-                            <select class="form-control" name="rider_id" required></select>
+                            <select class="form-control" name="rider_id" required>
+                                <option value="">Select Rider</option>
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Team</label>
-                            <select class="form-control" name="team_id" required></select>
+                            <select class="form-control" name="team_id" required>
+                                <option value="">Select Team</option>
+                            </select>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Time (format: HH:MM:SS)</label>
-                            <input type="text" class="form-control" name="race_time" required pattern="^(?:(?:([01]?\d|2[0-3]):)?([0-5]?\d):)?([0-5]?\d)$" placeholder="00:40:55">
+                            <label class="form-label">Race Time</label>
+                            <input type="text" class="form-control" name="race_time" required placeholder="e.g., 42:15.123">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Points</label>
+                            <input type="number" class="form-control" name="points" required min="0" max="25">
                         </div>
                         <button type="submit" class="btn btn-primary">Add Result</button>
                     </form>
@@ -992,7 +1002,18 @@
                             `;
 
                             // Add race results
-                            race.results.sort((a, b) => a.position - b.position).forEach(result => {
+                            race.results.sort((a, b) => {
+                                if (a.points !== b.points) {
+                                    return b.points - a.points;
+                                }
+                                if (a.race_time === 'DNF' && b.race_time !== 'DNF') {
+                                    return 1;
+                                }
+                                if (a.race_time !== 'DNF' && b.race_time === 'DNF') {
+                                    return -1;
+                                }
+                                return a.race_time.localeCompare(b.race_time);
+                            }).forEach(result => {
                                 tbody.innerHTML += `
                                     <tr>
                                         <td>${result.position || 'Not set'}</td>
@@ -1011,7 +1032,18 @@
                     } else {
                         // Single race view
                         if (data.race_status === 'finished' && data.results && data.results.length > 0) {
-                            data.results.sort((a, b) => a.position - b.position).forEach(result => {
+                            data.results.sort((a, b) => {
+                                if (a.points !== b.points) {
+                                    return b.points - a.points;
+                                }
+                                if (a.race_time === 'DNF' && b.race_time !== 'DNF') {
+                                    return 1;
+                                }
+                                if (a.race_time !== 'DNF' && b.race_time === 'DNF') {
+                                    return -1;
+                                }
+                                return a.race_time.localeCompare(b.race_time);
+                            }).forEach(result => {
                                 tbody.innerHTML += `
                                     <tr>
                                         <td>${result.position || 'Not set'}</td>
@@ -1640,37 +1672,50 @@
             }
         });
 
-        document.getElementById('addResultForm').addEventListener('submit', (e) => {
+        document.getElementById('addResultForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
             const data = Object.fromEntries(formData);
             
             // Validate required fields
-            if (!data.calendar_id || !data.rider_id || !data.team_id || !data.race_time) {
+            if (!data.calendar_id || !data.rider_id || !data.team_id || !data.race_time || !data.points) {
                 alert('Please fill in all required fields');
                 return;
             }
 
-            fetch('/api/results', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Network response was not ok');
-                return response.json();
-            })
-            .then(() => {
+            try {
+                // First, add the new result
+                const addResponse = await fetch('/api/results', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        calendar_id: parseInt(data.calendar_id),
+                        rider_id: parseInt(data.rider_id),
+                        team_id: parseInt(data.team_id),
+                        race_time: data.race_time,
+                        points: parseInt(data.points)
+                    })
+                });
+
+                if (!addResponse.ok) {
+                    const errorData = await addResponse.json();
+                    throw new Error(errorData.error || 'Failed to add result');
+                }
+
+                // Reload results table
                 loadResults();
+                
+                // Reset form and close modal
                 e.target.reset();
                 bootstrap.Modal.getInstance(document.getElementById('addResultModal')).hide();
-            })
-            .catch(error => {
+                
+                alert('Result added successfully!');
+            } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to add result. Please try again.');
-            });
+                alert(error.message || 'Failed to add result. Please try again.');
+            }
         });
 
         document.getElementById('editResultForm').addEventListener('submit', (e) => {
@@ -1844,6 +1889,45 @@
                     });
                 })
                 .catch(error => console.error('Error loading teams:', error));
+        }
+
+        function showAddResultModal() {
+            // Load races for the dropdown
+            fetch('/api/calendar')
+                .then(response => response.json())
+                .then(races => {
+                    const raceSelect = document.querySelector('#addResultForm select[name="calendar_id"]');
+                    raceSelect.innerHTML = '<option value="">Select Race</option>';
+                    races.forEach(race => {
+                        raceSelect.innerHTML += `<option value="${race.calendar_id}">${race.race_name}</option>`;
+                    });
+                });
+
+            // Load riders for the dropdown
+            fetch('/api/riders')
+                .then(response => response.json())
+                .then(riders => {
+                    const riderSelect = document.querySelector('#addResultForm select[name="rider_id"]');
+                    riderSelect.innerHTML = '<option value="">Select Rider</option>';
+                    riders.forEach(rider => {
+                        riderSelect.innerHTML += `<option value="${rider.rider_id}">${rider.name}</option>`;
+                    });
+                });
+
+            // Load teams for the dropdown
+            fetch('/api/teams')
+                .then(response => response.json())
+                .then(teams => {
+                    const teamSelect = document.querySelector('#addResultForm select[name="team_id"]');
+                    teamSelect.innerHTML = '<option value="">Select Team</option>';
+                    teams.forEach(team => {
+                        teamSelect.innerHTML += `<option value="${team.team_id}">${team.team_name}</option>`;
+                    });
+                });
+
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('addResultModal'));
+            modal.show();
         }
     </script>
 </body>

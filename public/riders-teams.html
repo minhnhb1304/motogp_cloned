@@ -488,7 +488,9 @@
               container.innerHTML += `
                     <div class="col-md-4 mb-4">
                         <div class="card team-card h-100">
-                            <img src="/images/teams/${team.team_picture || 'default-team.webp'}" 
+                            <img src="/images/teams/${
+                              team.team_picture || "default-team.webp"
+                            }" 
                                  class="card-img-top team-img" 
                                  alt="${team.team_name}"
                                  onerror="this.onerror=null; this.src='/images/teams/default-team.webp';">
@@ -498,10 +500,16 @@
                                     <h6>Team Riders</h6>
                                     <div class="rider-list">
                                         <div class="rider-item">
-                                            ${team.rider1_name || 'No rider assigned'}
+                                            ${
+                                              team.rider1_name ||
+                                              "No rider assigned"
+                                            }
                                         </div>
                                         <div class="rider-item">
-                                            ${team.rider2_name || 'No rider assigned'}
+                                            ${
+                                              team.rider2_name ||
+                                              "No rider assigned"
+                                            }
                                         </div>
                                     </div>
                                 </div>
@@ -511,9 +519,9 @@
                 `;
             });
           })
-          .catch(error => {
-            console.error('Error loading teams:', error);
-            alert('Failed to load teams. Please refresh the page.');
+          .catch((error) => {
+            console.error("Error loading teams:", error);
+            alert("Failed to load teams. Please refresh the page.");
           });
       }
 
